@@ -1,0 +1,1878 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goat Farm Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf5ee; --card:#fffdf9; --ink:#332a20; --muted:#8b7a66;
+    --line:#ece0d0; --accent:#4a7c59; --accent-2:#3d6a4a; --accent-soft:#eaf2ea;
+    --danger:#b4432f; --warn:#b07b2a; --info:#3a6b8a; --info-soft:#e6eff5;
+    --radius:14px;
+    --font-display:"Fraunces", Georgia, "Times New Roman", serif;
+    --font-body:"Nunito", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --shadow-sm:0 1px 2px rgba(90,68,45,.06);
+    --shadow-md:0 12px 32px -16px rgba(90,68,45,.30);
+    --ease:cubic-bezier(.22,.61,.36,1);
+    --t-fast:.18s var(--ease); --t:.3s var(--ease);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:84px}
+  body{
+    margin:0;color:var(--ink);font-size:15px;line-height:1.55;
+    font-family:var(--font-body);
+    background:
+      radial-gradient(1200px 620px at 12% -12%, #fdf2e2 0%, rgba(253,242,226,0) 62%),
+      radial-gradient(950px 520px at 102% -4%, #eef4ec 0%, rgba(238,244,236,0) 58%),
+      var(--bg);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;margin:0 0 10px;line-height:1.22}
+  h3{font-size:17px}
+  .muted{color:var(--muted)} .small{font-size:13px}
+  .hidden{display:none !important}
+
+  header{
+    background:rgba(255,253,249,.86);
+    -webkit-backdrop-filter:blur(12px) saturate(1.3);
+    backdrop-filter:blur(12px) saturate(1.3);
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:20;
+    transition:box-shadow var(--t), background var(--t);
+  }
+  header.scrolled{box-shadow:0 10px 26px -20px rgba(90,68,45,.65)}
+  .bar{max-width:1040px;margin:0 auto;padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  .brand{font-family:var(--font-display);font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+  nav{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{
+    border:1px solid transparent;background:transparent;color:var(--muted);
+    padding:7px 13px;border-radius:999px;cursor:pointer;font-family:var(--font-body);
+    font-size:13.5px;font-weight:700;
+    transition:background var(--t-fast), color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+  }
+  .tab:hover{background:var(--accent-soft);color:var(--accent-2)}
+  .tab.active{background:var(--accent);color:#fff;box-shadow:0 8px 18px -10px rgba(74,124,89,.95)}
+  .tab:active{transform:scale(.95)}
+
+  main{max-width:1040px;margin:0 auto;padding:18px 16px 60px}
+  .view:not(.hidden){animation:viewIn .38s var(--ease) both}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:16px;box-shadow:var(--shadow-sm);
+    transition:box-shadow var(--t), border-color var(--t), transform var(--t);
+  }
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  @media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}}
+  .stat{text-align:center;padding:16px 8px;animation:itemIn .45s var(--ease) both}
+  .stat:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+  .stat .n{font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .stat .l{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+
+  .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:760px){.form-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.form-grid{grid-template-columns:1fr}}
+  label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700;color:var(--muted)}
+  .full{grid-column:1/-1}
+  input,select,textarea{
+    font:inherit;font-size:14px;font-weight:400;color:var(--ink);
+    padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fffdf9;width:100%;
+    transition:border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+  }
+  input:hover,select:hover,textarea:hover{border-color:#dccdb6}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 4px rgba(74,124,89,.14)}
+  textarea{resize:vertical}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{
+    font:inherit;font-family:var(--font-body);font-weight:700;font-size:14px;cursor:pointer;
+    padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:#fffdf9;color:var(--ink);
+    transition:background var(--t-fast), color var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  }
+  .btn:hover{background:#f8f2e8;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .btn:active{transform:translateY(0) scale(.975);box-shadow:none}
+  .btn.primary{background:var(--accent);border-color:var(--accent-2);color:#fff;box-shadow:0 8px 18px -12px rgba(74,124,89,.95)}
+  .btn.primary:hover{background:#548c62;box-shadow:0 10px 22px -12px rgba(74,124,89,1)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
+  .btn.ghost:hover{color:var(--danger);background:#fdf0ee;transform:none;box-shadow:none}
+  .btn.tiny{padding:5px 11px;font-size:13px}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .space{justify-content:space-between}
+  .mini{width:auto;min-width:150px;padding:6px 10px;font-size:13px}
+
+  /* Sub tabs */
+  .subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .subtab{
+    border:1px solid var(--line);background:#fffdf9;color:var(--muted);
+    padding:7px 16px;border-radius:999px;cursor:pointer;font-family:var(--font-body);
+    font-size:13.5px;font-weight:700;
+    transition:background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+  }
+  .subtab:hover{color:var(--accent-2);background:var(--accent-soft);border-color:var(--accent-soft)}
+  .subtab.active{background:var(--accent);color:#fff;border-color:var(--accent-2)}
+  .subtab:active{transform:scale(.96)}
+
+  .goat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .goat-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:15px;
+    box-shadow:var(--shadow-sm);animation:itemIn .45s var(--ease) both;
+    transition:transform var(--t), box-shadow var(--t), border-color var(--t);
+  }
+  .goat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:#e0d0b8}
+  .goat-card h4{margin:0;font-size:17px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .badge{
+    font-family:var(--font-body);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-2);
+  }
+  .badge.sold{background:#f1eae0;color:#7a6a56}
+  .badge.deceased{background:#fbe9e5;color:var(--danger)}
+  .badge.pregnant{background:#fdf1de;color:var(--warn)}
+  .badge.low{background:#fdf1de;color:var(--warn)}
+  .badge.out{background:#fbe9e5;color:var(--danger)}
+  .badge.expiring{background:#fdf1de;color:var(--warn)}
+  .badge.expired{background:#fbe9e5;color:var(--danger)}
+  .goat-meta{font-size:13px;color:var(--muted);margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:4px 14px}
+  .goat-parents{font-size:12.5px;color:var(--muted);margin:-6px 0 12px;display:flex;flex-wrap:wrap;gap:4px 14px}
+  .goat-parents b{color:var(--ink);font-weight:700}
+
+  .log-item{
+    display:flex;gap:12px;padding:11px 10px;border-bottom:1px solid var(--line);
+    border-radius:10px;animation:itemIn .4s var(--ease) both;
+    transition:background var(--t-fast), transform var(--t-fast);
+  }
+  .log-item:hover{background:#faf4ea}
+  .log-item:last-child{border-bottom:0}
+  .log-icon{font-size:19px;line-height:1.2;width:24px;text-align:center;flex:none}
+  .log-body{flex:1;min-width:0}
+  .log-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .log-title{font-weight:700}
+  .log-date{font-size:12px;color:var(--muted);white-space:nowrap}
+  .log-detail{font-size:13px;color:var(--muted);margin-top:2px;word-wrap:break-word}
+  .empty{color:var(--muted);font-size:14px;padding:8px 0}
+
+  .report-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--accent);padding-bottom:10px;margin-bottom:14px}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+  .fact{background:#fdf8f0;border:1px solid var(--line);border-radius:12px;padding:10px;transition:transform var(--t-fast), box-shadow var(--t-fast)}
+  .fact:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+  .fact .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800}
+  .fact .v{font-family:var(--font-display);font-size:16px;font-weight:600;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:#faf4ea;font-weight:800}
+  tbody tr{transition:background var(--t-fast)}
+  tbody tr:hover{background:#fdf8f0}
+  td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .chart-wrap{overflow-x:auto;margin:8px 0 18px}
+  .fade-in{animation:fadeIn .45s var(--ease) both}
+
+  #toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,24px) scale(.96);
+    background:#332a20;color:#fff8ee;font-weight:700;
+    padding:11px 20px;border-radius:999px;font-size:14px;
+    box-shadow:0 14px 34px -16px rgba(51,42,32,.9);
+    opacity:0;pointer-events:none;z-index:50;
+    transition:opacity .3s var(--ease), transform .3s var(--ease);
+  }
+  #toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none}}
+  @keyframes itemIn{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none}}
+  @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  }
+
+  @media print{
+    .no-print{display:none !important}
+    *{animation:none !important;transition:none !important;box-shadow:none !important}
+    body{background:#fff;font-size:12px}
+    main{max-width:none;padding:0}
+    .card{border:0;padding:0;margin:0;background:#fff}
+    .view.hidden{display:none}
+    th{background:#f2f2f2}
+    .log-item{break-inside:avoid}
+    tr{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header class="no-print">
+  <div class="bar">
+    <div class="brand">🐐 <span>Goat Farm Manager</span></div>
+    <nav id="tabs">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="goats">Goats</button>
+      <button class="tab" data-tab="log">Daily Log</button>
+      <button class="tab" data-tab="inventory">Inventory</button>
+      <button class="tab" data-tab="milk">Milk</button>
+      <button class="tab" data-tab="reports">Reports</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section id="view-dashboard" class="view">
+    <div class="cards">
+      <div class="card stat" style="animation-delay:0ms"><div class="n" id="statGoats">0</div><div class="l">Goats</div></div>
+      <div class="card stat" style="animation-delay:60ms"><div class="n" id="statActive">0</div><div class="l">Active</div></div>
+      <div class="card stat" style="animation-delay:120ms"><div class="n" id="statToday">0</div><div class="l">Updates today</div></div>
+      <div class="card stat" style="animation-delay:180ms"><div class="n" id="statMilk">0</div><div class="l">Milk · 7 days (L)</div></div>
+    </div>
+
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card stat" style="animation-delay:240ms"><div class="n" id="statFeedLow">0</div><div class="l">Feeds low</div></div>
+      <div class="card stat" style="animation-delay:300ms"><div class="n" id="statMedLow">0</div><div class="l">Medicines low</div></div>
+      <div class="card stat" style="animation-delay:360ms"><div class="n" id="statExpiring">0</div><div class="l">Expiring soon</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Recent updates</h3>
+        <div id="recentList"></div>
+      </div>
+      <div class="card">
+        <h3>Upcoming follow-ups</h3>
+        <div id="dueList"></div>
+      </div>
+    </div>
+
+    <div class="card no-print">
+      <h3>Data</h3>
+      <p class="muted small" style="margin-top:0">Everything is stored in this browser only. Export regularly to keep a backup.</p>
+      <div class="actions">
+        <button class="btn" id="btnExport">⬇ Export backup</button>
+        <button class="btn" id="btnImport">⬆ Import backup</button>
+        <button class="btn" id="btnSample">Load sample data</button>
+        <button class="btn ghost" id="btnClear">Clear all data</button>
+        <input type="file" id="fileImport" accept="application/json" hidden>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GOATS ================= -->
+  <section id="view-goats" class="view hidden">
+    <div class="card no-print">
+      <h3 id="goatFormTitle">Add a goat</h3>
+      <form id="goatForm" class="form-grid" autocomplete="off">
+        <label>Tag / ID <input name="tag" required placeholder="24-001"></label>
+        <label>Name <input name="name" placeholder="Bella"></label>
+        <label>Breed <input name="breed" placeholder="Boer / Alpine / Local"></label>
+        <label>Sex <select name="sex"><option>Female</option><option>Male</option></select></label>
+        <label>Date of birth <input type="date" name="dob"></label>
+        <label>Status
+          <select name="status">
+            <option>Active</option><option>Lactating</option><option>Pregnant</option>
+            <option>Dry</option><option>Sold</option><option>Deceased</option>
+          </select>
+        </label>
+        <label>Dam (mother) <select name="damId" id="damSelect"><option value="">— unknown —</option></select></label>
+        <label>Sire (father) <select name="sireId" id="sireSelect"><option value="">— unknown —</option></select></label>
+        <label>Notes <input name="notes" placeholder="Marks, origin, etc."></label>
+        <div class="full actions">
+          <button type="submit" class="btn primary">Save goat</button>
+          <button type="button" class="btn hidden" id="cancelGoatEdit">Cancel edit</button>
+        </div>
+      </form>
+    </div>
+    <div id="goatList" class="goat-grid"></div>
+  </section>
+
+  <!-- ================= DAILY LOG ================= -->
+  <section id="view-log" class="view hidden">
+    <div class="card no-print">
+      <h3>Log a daily update</h3>
+      <form id="logForm" class="form-grid" autocomplete="off">
+        <label>Goat <select name="goatId" id="logGoat" required></select></label>
+        <label>Date <input type="date" name="date" id="logDate" required></label>
+        <label>Category <select name="category" id="logCategory"></select></label>
+        <div class="form-grid full" id="logExtras"></div>
+        <label class="full">Details / notes
+          <textarea name="details" rows="2" placeholder="e.g. appetite good, slight limp on left front leg"></textarea>
+        </label>
+        <div class="full actions">
+          <button type="submit" class="btn primary">Add update</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="row space" style="margin-bottom:6px">
+        <h3 style="margin:0">Update history</h3>
+        <select id="logFilter" class="mini no-print"></select>
+      </div>
+      <div id="logList"></div>
+    </div>
+  </section>
+
+  <!-- ================= INVENTORY ================= -->
+  <section id="view-inventory" class="view hidden">
+    <div class="subtabs no-print" id="invTabs">
+      <button class="subtab active" data-sub="feeds">🌾 Feeds</button>
+      <button class="subtab" data-sub="medicines">💊 Medicines</button>
+    </div>
+
+    <!-- FEEDS -->
+    <div id="sub-feeds" class="subview">
+      <div class="card no-print">
+        <h3>Add feed item</h3>
+        <form id="feedForm" class="form-grid" autocomplete="off">
+          <label>Name <input name="name" required placeholder="Dairy meal"></label>
+          <label>Unit <input name="unit" required placeholder="kg / bag / L" value="kg"></label>
+          <label>Starting quantity <input name="quantity" type="number" step="0.01" min="0" value="0"></label>
+          <label>Reorder level <input name="reorder" type="number" step="0.01" min="0" value="10"></label>
+          <label class="full">Notes <input name="notes" placeholder="Supplier, brand, etc."></label>
+          <div class="full actions">
+            <button type="submit" class="btn primary">Save feed</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card no-print">
+        <h3>Add stock to existing feed</h3>
+        <form id="feedStockForm" class="form-grid" autocomplete="off">
+          <label>Feed item <select name="itemId" id="feedStockSelect" required></select></label>
+          <label>Quantity to add <input name="qty" type="number" step="0.01" min="0.01" required></label>
+          <label>Date <input name="date" type="date" id="feedStockDate" required></label>
+          <div class="full actions">
+            <button type="submit" class="btn">➕ Add stock</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Feed inventory</h3>
+        <div id="feedTable"></div>
+      </div>
+
+      <div class="card">
+        <h3>Recent feed movements</h3>
+        <div id="feedLogList"></div>
+      </div>
+    </div>
+
+    <!-- MEDICINES -->
+    <div id="sub-medicines" class="subview hidden">
+      <div class="card no-print">
+        <h3>Add medicine / vaccine</h3>
+        <form id="medForm" class="form-grid" autocomplete="off">
+          <label>Name <input name="name" required placeholder="Dewormer / CD&T vaccine"></label>
+          <label>Unit <input name="unit" required placeholder="dose / ml / bottle" value="dose"></label>
+          <label>Starting quantity <input name="quantity" type="number" step="0.01" min="0" value="0"></label>
+          <label>Reorder level <input name="reorder" type="number" step="0.01" min="0" value="5"></label>
+          <label>Expiry date <input type="date" name="expiry"></label>
+          <label>Notes <input name="notes" placeholder="Batch, supplier, etc."></label>
+          <div class="full actions">
+            <button type="submit" class="btn primary">Save medicine</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card no-print">
+        <h3>Add stock to existing medicine</h3>
+        <form id="medStockForm" class="form-grid" autocomplete="off">
+          <label>Medicine <select name="itemId" id="medStockSelect" required></select></label>
+          <label>Quantity to add <input name="qty" type="number" step="0.01" min="0.01" required></label>
+          <label>Date <input name="date" type="date" id="medStockDate" required></label>
+          <div class="full actions">
+            <button type="submit" class="btn">➕ Add stock</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Medicine inventory</h3>
+        <div id="medTable"></div>
+      </div>
+
+      <div class="card">
+        <h3>Recent medicine movements</h3>
+        <div id="medLogList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MILK ================= -->
+  <section id="view-milk" class="view hidden">
+    <div class="card no-print">
+      <h3>Milk production filters</h3>
+      <div class="form-grid">
+        <label>Goat <select id="milkGoat"></select></label>
+        <label>From <input type="date" id="milkFrom"></label>
+        <label>To <input type="date" id="milkTo"></label>
+      </div>
+    </div>
+
+    <div id="milkSummary" class="cards"></div>
+
+    <div class="card">
+      <h3>Daily milk totals (liters)</h3>
+      <div class="chart-wrap" id="milkChart"></div>
+    </div>
+
+    <div class="card">
+      <h3>Per-goat breakdown</h3>
+      <div id="milkTable"></div>
+    </div>
+
+    <div class="card">
+      <h3>Recent milk records</h3>
+      <div id="milkLogList"></div>
+    </div>
+  </section>
+
+  <!-- ================= REPORTS ================= -->
+  <section id="view-reports" class="view hidden">
+    <div class="card no-print">
+      <h3>Generate a report</h3>
+      <div class="form-grid">
+        <label>Goat <select id="repGoat"></select></label>
+        <label>From <input type="date" id="repFrom"></label>
+        <label>To <input type="date" id="repTo"></label>
+        <div class="full actions">
+          <button class="btn primary" id="btnReport">Generate report</button>
+          <button class="btn" id="btnPrint">🖨 Print / Save PDF</button>
+        </div>
+      </div>
+    </div>
+    <div id="reportOut" class="card"></div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   Goat Farm Manager — logic (with inventory & milk)
+   ========================================================= */
+
+const $  = s => document.querySelector(s);
+
+const STORE_KEY = 'goatfarm.v1';
+let state = { goats: [], logs: [], feeds: [], medicines: [], inventoryLogs: [] };
+let editingGoatId = null;
+
+/* ---------- Categories & fields ---------- */
+const CATEGORIES = {
+  'Weight': { icon:'⚖️', fields:[{k:'weight', label:'Weight (kg)', type:'number', step:'0.1'}] },
+  'Milk': { icon:'🥛', fields:[
+    {k:'milk', label:'Milk (liters)', type:'number', step:'0.1'},
+    {k:'session', label:'Session', type:'select', options:['Morning','Evening','Both']}
+  ]},
+  'Feeding': { icon:'🌾', fields:[
+    {k:'feedId', label:'Feed item', type:'feed-select'},
+    {k:'feedQty', label:'Quantity used', type:'number', step:'0.01'},
+    {k:'feed', label:'Notes', type:'text'}
+  ]},
+  'Health': { icon:'🩺', fields:[
+    {k:'cost', label:'Cost', type:'number', step:'0.01'},
+    {k:'nextDue', label:'Follow-up date', type:'date'}
+  ]},
+  'Medication': { icon:'💊', fields:[
+    {k:'medId', label:'Medicine from inventory', type:'medicine-select'},
+    {k:'medQty', label:'Quantity used', type:'number', step:'0.01'},
+    {k:'cost', label:'Cost', type:'number', step:'0.01'},
+    {k:'nextDue', label:'Next dose date', type:'date'}
+  ]},
+  'Vaccination': { icon:'💉', fields:[
+    {k:'medId', label:'Vaccine from inventory', type:'medicine-select'},
+    {k:'medQty', label:'Quantity used', type:'number', step:'0.01'},
+    {k:'cost', label:'Cost', type:'number', step:'0.01'},
+    {k:'nextDue', label:'Next due date', type:'date'}
+  ]},
+  'Breeding': { icon:'❤️', fields:[
+    {k:'nextDue', label:'Expected kidding', type:'date'},
+    {k:'cost', label:'Cost', type:'number', step:'0.01'}
+  ]},
+  'Kidding': { icon:'🐐', fields:[{k:'kids', label:'Kids born', type:'number', step:'1'}] },
+  'Sale': { icon:'💰', fields:[{k:'amount', label:'Amount received', type:'number', step:'0.01'}] },
+  'Observation': { icon:'📝', fields:[] }
+};
+
+/* ---------- Utilities ---------- */
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+function todayISO(){
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+}
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d)) return iso;
+  return d.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+}
+function ageFrom(dob){
+  if(!dob) return '—';
+  const b = new Date(dob + 'T00:00:00'), n = new Date();
+  if(isNaN(b)) return '—';
+  let months = (n.getFullYear()-b.getFullYear())*12 + (n.getMonth()-b.getMonth());
+  if(n.getDate() < b.getDate()) months--;
+  if(months < 0) return '—';
+  const y = Math.floor(months/12), m = months % 12;
+  if(y === 0 && m === 0) return '<1 month';
+  return [ y ? y + 'y' : '', m ? m + 'm' : '' ].filter(Boolean).join(' ');
+}
+function daysUntil(iso){
+  if(!iso) return null;
+  const t = new Date(iso + 'T00:00:00');
+  if(isNaN(t)) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((t - now) / 86400000);
+}
+
+function save(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e){ toast('Could not save (storage full?)'); }
+}
+function load(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const p = JSON.parse(raw);
+      state.goats = Array.isArray(p.goats) ? p.goats : [];
+      state.logs  = Array.isArray(p.logs)  ? p.logs  : [];
+      state.feeds = Array.isArray(p.feeds) ? p.feeds : [];
+      state.medicines = Array.isArray(p.medicines) ? p.medicines : [];
+      state.inventoryLogs = Array.isArray(p.inventoryLogs) ? p.inventoryLogs : [];
+    }
+  } catch(e){ /* start fresh */ }
+}
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function animateNumber(el, target, decimals = 0){
+  target = Number(target) || 0;
+  const start = Number(el.dataset.val) || 0;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce || start === target){
+    el.dataset.val = target;
+    el.textContent = target.toFixed(decimals);
+    return;
+  }
+  cancelAnimationFrame(el._raf);
+  const dur = 650, t0 = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - p, 3);
+    const v = start + (target - start) * e;
+    el.textContent = v.toFixed(decimals);
+    if(p < 1){ el._raf = requestAnimationFrame(step); }
+    else { el.dataset.val = target; el.textContent = target.toFixed(decimals); }
+  };
+  el._raf = requestAnimationFrame(step);
+}
+
+const goatById = id => state.goats.find(g => g.id === id);
+const feedById = id => state.feeds.find(f => f.id === id);
+const medById  = id => state.medicines.find(m => m.id === id);
+const goatLabel = g => g ? `${g.tag}${g.name ? ' — ' + g.name : ''}` : 'Unknown goat';
+
+function sortedLogs(list){
+  return [...list].sort((a,b) =>
+    (b.date || '').localeCompare(a.date || '') ||
+    (b.createdAt || 0) - (a.createdAt || 0));
+}
+function logsFor(goatId){ return sortedLogs(state.logs.filter(l => l.goatId === goatId)); }
+
+/* ---------- Stock status helpers ---------- */
+function stockStatus(item){
+  const q = Number(item.quantity) || 0;
+  const r = Number(item.reorder) || 0;
+  if(q <= 0) return 'out';
+  if(q <= r) return 'low';
+  return 'ok';
+}
+function stockBadge(item){
+  const s = stockStatus(item);
+  if(s === 'out') return '<span class="badge out">Out</span>';
+  if(s === 'low') return '<span class="badge low">Low</span>';
+  return '<span class="badge">OK</span>';
+}
+function expiryBadge(item){
+  if(!item.expiry) return '';
+  const d = daysUntil(item.expiry);
+  if(d === null) return '';
+  if(d < 0) return '<span class="badge expired">Expired</span>';
+  if(d <= 30) return `<span class="badge expiring">${d}d left</span>`;
+  return '';
+}
+
+/* ---------- Navigation ---------- */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v =>
+    v.classList.toggle('hidden', v.id !== 'view-' + name));
+  if(name === 'dashboard') renderDashboard();
+  if(name === 'goats'){ renderGoats(); fillParentSelects(editingGoatId); }
+  if(name === 'log'){ fillGoatSelects(); renderLogList(); renderLogExtras(); }
+  if(name === 'inventory') renderInventory();
+  if(name === 'milk'){ fillMilkGoatSelect(); renderMilk(); }
+  if(name === 'reports') fillGoatSelects();
+}
+
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab');
+  if(b) switchTab(b.dataset.tab);
+});
+
+/* ---------- Header shadow ---------- */
+const headerEl = document.querySelector('header');
+window.addEventListener('scroll', () => {
+  headerEl.classList.toggle('scrolled', window.scrollY > 6);
+}, { passive:true });
+
+/* =========================================================
+   GOAT SELECTS
+   ========================================================= */
+function fillGoatSelects(){
+  const opts = state.goats.map(g =>
+    `<option value="${g.id}">${esc(goatLabel(g))}</option>`).join('');
+
+  const lg = $('#logGoat');
+  const keepLog = lg.value;
+  lg.innerHTML = state.goats.length ? opts : '<option value="">— no goats yet —</option>';
+  if(keepLog && goatById(keepLog)) lg.value = keepLog;
+
+  const rg = $('#repGoat');
+  const keepRep = rg.value;
+  rg.innerHTML = '<option value="__all">🐐 All goats (herd summary)</option>' + opts;
+  if(keepRep && (keepRep === '__all' || goatById(keepRep))) rg.value = keepRep;
+
+  const lf = $('#logFilter');
+  const keepFil = lf.value;
+  lf.innerHTML = '<option value="">All goats</option>' + opts;
+  if(keepFil) lf.value = keepFil;
+}
+
+function fillMilkGoatSelect(){
+  const opts = state.goats.map(g =>
+    `<option value="${g.id}">${esc(goatLabel(g))}</option>`).join('');
+  const m = $('#milkGoat');
+  const keep = m.value;
+  m.innerHTML = '<option value="">All goats</option>' + opts;
+  if(keep && (keep === '' || goatById(keep))) m.value = keep;
+}
+
+function fillParentSelects(excludeId){
+  const makeOpts = list => '<option value="">— unknown —</option>' +
+    list.map(g => `<option value="${g.id}">${esc(goatLabel(g))}</option>`).join('');
+  const females = state.goats.filter(g => g.id !== excludeId && (g.sex === 'Female' || !g.sex));
+  const males   = state.goats.filter(g => g.id !== excludeId && (g.sex === 'Male' || !g.sex));
+  const damSel = $('#damSelect'), sireSel = $('#sireSelect');
+  const keepDam = damSel.value, keepSire = sireSel.value;
+  damSel.innerHTML = makeOpts(females);
+  sireSel.innerHTML = makeOpts(males);
+  if(keepDam && [...damSel.options].some(o => o.value === keepDam)) damSel.value = keepDam;
+  if(keepSire && [...sireSel.options].some(o => o.value === keepSire)) sireSel.value = keepSire;
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard(){
+  const goats = state.goats;
+  const today = todayISO();
+  const weekAgo = new Date(Date.now() - 6*86400000).toISOString().slice(0,10);
+
+  const activeCount = goats.filter(g => !['Sold','Deceased'].includes(g.status)).length;
+  const todayCount  = state.logs.filter(l => l.date === today).length;
+  const milk = state.logs
+    .filter(l => l.category === 'Milk' && l.date >= weekAgo)
+    .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
+
+  animateNumber($('#statGoats'), goats.length);
+  animateNumber($('#statActive'), activeCount);
+  animateNumber($('#statToday'), todayCount);
+  animateNumber($('#statMilk'), milk, 1);
+
+  const feedLow = state.feeds.filter(f => stockStatus(f) !== 'ok').length;
+  const medLow  = state.medicines.filter(m => stockStatus(m) !== 'ok').length;
+  const expiring = state.medicines.filter(m => {
+    if(!m.expiry) return false;
+    const d = daysUntil(m.expiry);
+    return d !== null && d <= 30;
+  }).length;
+
+  animateNumber($('#statFeedLow'), feedLow);
+  animateNumber($('#statMedLow'), medLow);
+  animateNumber($('#statExpiring'), expiring);
+
+  const recent = sortedLogs(state.logs).slice(0, 7);
+  $('#recentList').innerHTML = recent.length
+    ? recent.map(logItemHTML).join('')
+    : '<p class="empty">No updates recorded yet. Go to <b>Daily Log</b> to add the first one.</p>';
+
+  const due = state.logs
+    .filter(l => l.data?.nextDue && l.data.nextDue >= today)
+    .sort((a,b) => a.data.nextDue.localeCompare(b.data.nextDue))
+    .slice(0, 8);
+
+  $('#dueList').innerHTML = due.length
+    ? due.map((l, i) => {
+        const g = goatById(l.goatId);
+        const cat = CATEGORIES[l.category] || { icon:'📌' };
+        const days = Math.round(
+          (new Date(l.data.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+        const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+        return `<div class="log-item" style="animation-delay:${Math.min(i*35,280)}ms">
+          <div class="log-icon">${cat.icon}</div>
+          <div class="log-body">
+            <div class="log-top">
+              <span class="log-title">${esc(l.category)} — ${esc(g ? goatLabel(g) : 'Unknown')}</span>
+              <span class="log-date">${fmtDate(l.data.nextDue)}</span>
+            </div>
+            <div class="log-detail">${esc(when)}${l.details ? ' · ' + esc(l.details) : ''}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<p class="empty">Nothing scheduled. Follow-up dates you enter will appear here.</p>';
+}
+
+function logItemHTML(l, i = 0){
+  const g = goatById(l.goatId);
+  const cat = CATEGORIES[l.category] || { icon:'📌' };
+  const detail = formatLogData(l);
+  return `<div class="log-item" style="animation-delay:${Math.min(i*30,260)}ms">
+    <div class="log-icon">${cat.icon}</div>
+    <div class="log-body">
+      <div class="log-top">
+        <span class="log-title">${esc(l.category)} — ${esc(g ? goatLabel(g) : 'Unknown goat')}</span>
+        <span class="log-date">${fmtDate(l.date)}</span>
+      </div>
+      ${detail ? `<div class="log-detail">${esc(detail)}</div>` : ''}
+    </div>
+    <button class="btn ghost no-print" data-del-log="${l.id}" title="Delete">✕</button>
+  </div>`;
+}
+
+function formatLogData(l){
+  const bits = [];
+  if(l.data){
+    for(const [k,v] of Object.entries(l.data)){
+      if(v === '' || v == null) continue;
+      if(k === 'weight') bits.push(`${v} kg`);
+      else if(k === 'milk') bits.push(`${v} L milk`);
+      else if(k === 'session') bits.push(v);
+      else if(k === 'kids') bits.push(`${v} kid(s) born`);
+      else if(k === 'nextDue') bits.push(`next: ${fmtDate(v)}`);
+      else if(k === 'feedId'){ const f = feedById(v); bits.push(f ? `Fed: ${f.name}` : 'Fed'); }
+      else if(k === 'feedQty') bits.push(`${v} used`);
+      else if(k === 'medId'){ const m = medById(v); bits.push(m ? `${m.name}` : 'Medicine'); }
+      else if(k === 'medQty') bits.push(`${v} used`);
+      else if(k === 'cost') bits.push(`cost ${v}`);
+      else if(k === 'amount') bits.push(`amount ${v}`);
+      else bits.push(`${k}: ${v}`);
+    }
+  }
+  if(l.details) bits.push(l.details);
+  return bits.join(' · ');
+}
+
+/* =========================================================
+   GOATS
+   ========================================================= */
+const goatForm = $('#goatForm');
+goatForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData(goatForm);
+  const data = {
+    tag: (f.get('tag') || '').trim(),
+    name: (f.get('name') || '').trim(),
+    breed: (f.get('breed') || '').trim(),
+    sex: f.get('sex'),
+    dob: f.get('dob'),
+    status: f.get('status'),
+    damId: (f.get('damId') || '').trim(),
+    sireId: (f.get('sireId') || '').trim(),
+    notes: (f.get('notes') || '').trim()
+  };
+  if(!data.tag){ toast('Tag / ID is required'); return; }
+
+  if(editingGoatId){
+    const g = goatById(editingGoatId);
+    if(g) Object.assign(g, data);
+    toast('Goat updated');
+    resetGoatForm();
+  } else {
+    state.goats.push({ id: uid(), createdAt: Date.now(), ...data });
+    toast('Goat added');
+  }
+  save();
+  goatForm.reset();
+  renderGoats();
+  fillGoatSelects();
+  fillMilkGoatSelect();
+  fillParentSelects(editingGoatId);
+});
+
+$('#cancelGoatEdit').addEventListener('click', resetGoatForm);
+
+function resetGoatForm(){
+  editingGoatId = null;
+  goatForm.reset();
+  $('#goatFormTitle').textContent = 'Add a goat';
+  $('#cancelGoatEdit').classList.add('hidden');
+  $('#goatForm').querySelector('button[type=submit]').textContent = 'Save goat';
+  fillParentSelects(null);
+}
+
+function startEditGoat(id){
+  const g = goatById(id);
+  if(!g) return;
+  editingGoatId = id;
+  goatForm.tag.value = g.tag || '';
+  goatForm.name.value = g.name || '';
+  goatForm.breed.value = g.breed || '';
+  goatForm.sex.value = g.sex || 'Female';
+  goatForm.dob.value = g.dob || '';
+  goatForm.status.value = g.status || 'Active';
+  goatForm.notes.value = g.notes || '';
+  fillParentSelects(id);
+  $('#damSelect').value = g.damId || '';
+  $('#sireSelect').value = g.sireId || '';
+  $('#goatFormTitle').textContent = 'Edit goat — ' + goatLabel(g);
+  $('#cancelGoatEdit').classList.remove('hidden');
+  goatForm.querySelector('button[type=submit]').textContent = 'Update goat';
+  switchTab('goats');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderGoats(){
+  const list = $('#goatList');
+  if(!state.goats.length){
+    list.innerHTML = '<div class="card"><p class="empty">No goats registered yet.</p></div>';
+    return;
+  }
+  list.innerHTML = state.goats.map((g, i) => {
+    const logs = logsFor(g.id);
+    const last = logs[0];
+    const weights = logs.filter(l => l.category === 'Weight' && l.data?.weight)
+                        .map(l => Number(l.data.weight));
+    const badgeClass = ['Sold','Deceased'].includes(g.status) ? g.status.toLowerCase()
+                     : g.status === 'Pregnant' ? 'pregnant' : '';
+    const dam = g.damId ? goatById(g.damId) : null;
+    const sire = g.sireId ? goatById(g.sireId) : null;
+    const parentBits = [];
+    if(dam) parentBits.push(`Dam: <b>${esc(dam.tag)}</b>${dam.name ? ' ' + esc(dam.name) : ''}`);
+    if(sire) parentBits.push(`Sire: <b>${esc(sire.tag)}</b>${sire.name ? ' ' + esc(sire.name) : ''}`);
+    const kidCount = state.goats.filter(k => k.damId === g.id || k.sireId === g.id).length;
+
+    return `<div class="goat-card" style="animation-delay:${Math.min(i*55,440)}ms">
+      <h4>${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}
+        <span class="badge ${badgeClass}">${esc(g.status || 'Active')}</span>
+      </h4>
+      <div class="goat-meta">
+        <span>${esc(g.sex || '—')}</span>
+        ${g.breed ? `<span>${esc(g.breed)}</span>` : ''}
+        <span>Age: ${ageFrom(g.dob)}</span>
+        ${weights.length ? `<span>Last weight: ${weights[weights.length-1]} kg</span>` : ''}
+        <span>${logs.length} update${logs.length === 1 ? '' : 's'}</span>
+        ${kidCount ? `<span>${kidCount} kid${kidCount === 1 ? '' : 's'}</span>` : ''}
+      </div>
+      ${parentBits.length ? `<div class="goat-parents">${parentBits.join(' · ')}</div>` : ''}
+      ${last ? `<div class="log-detail small" style="margin-bottom:10px">Last: ${esc(last.category)} on ${fmtDate(last.date)}</div>` : ''}
+      <div class="actions">
+        <button class="btn tiny primary" data-act="log" data-id="${g.id}">+ Update</button>
+        <button class="btn tiny" data-act="report" data-id="${g.id}">Report</button>
+        <button class="btn tiny" data-act="edit" data-id="${g.id}">Edit</button>
+        <button class="btn ghost" data-act="delete" data-id="${g.id}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+$('#goatList').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-act]');
+  if(!btn) return;
+  const { act, id } = btn.dataset;
+  const g = goatById(id);
+  if(!g) return;
+  if(act === 'edit') startEditGoat(id);
+  if(act === 'log'){
+    switchTab('log'); fillGoatSelects();
+    $('#logGoat').value = id; $('#logDate').value = todayISO();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  if(act === 'report'){
+    switchTab('reports'); fillGoatSelects();
+    $('#repGoat').value = id; generateReport();
+  }
+  if(act === 'delete'){
+    const count = state.logs.filter(l => l.goatId === id).length;
+    const kidCount = state.goats.filter(k => k.damId === id || k.sireId === id).length;
+    const extra = kidCount ? ` It is a parent of ${kidCount} goat(s); those links will be cleared.` : '';
+    if(confirm(`Delete ${goatLabel(g)} and its ${count} update(s)?${extra}`)){
+      state.goats.forEach(k => {
+        if(k.damId === id) k.damId = '';
+        if(k.sireId === id) k.sireId = '';
+      });
+      state.goats = state.goats.filter(x => x.id !== id);
+      state.logs = state.logs.filter(l => l.goatId !== id);
+      save(); renderGoats(); fillGoatSelects(); fillMilkGoatSelect();
+      fillParentSelects(editingGoatId); renderDashboard();
+      toast('Goat deleted');
+    }
+  }
+});
+
+/* =========================================================
+   DAILY LOG
+   ========================================================= */
+const logForm = $('#logForm');
+const logCategory = $('#logCategory');
+logCategory.innerHTML = Object.keys(CATEGORIES).map(c => `<option>${c}</option>`).join('');
+
+function renderLogExtras(){
+  const cfg = CATEGORIES[logCategory.value] || { fields: [] };
+  const html = cfg.fields.map(f => {
+    if(f.type === 'feed-select'){
+      const opts = state.feeds.length
+        ? state.feeds.map(x => `<option value="${x.id}">${esc(x.name)} (${esc(x.unit)}) · ${x.quantity} left</option>`).join('')
+        : '<option value="">— no feeds in inventory —</option>';
+      return `<label>${esc(f.label)} <select name="f_${f.k}">${opts}</select></label>`;
+    }
+    if(f.type === 'medicine-select'){
+      const opts = state.medicines.length
+        ? state.medicines.map(x => `<option value="${x.id}">${esc(x.name)} (${esc(x.unit)}) · ${x.quantity} left</option>`).join('')
+        : '<option value="">— no medicines in inventory —</option>';
+      return `<label>${esc(f.label)} <select name="f_${f.k}">${opts}</select></label>`;
+    }
+    if(f.type === 'select'){
+      return `<label>${esc(f.label)} <select name="f_${f.k}">
+        ${(f.options||[]).map(o => `<option>${esc(o)}</option>`).join('')}
+      </select></label>`;
+    }
+    return `<label>${esc(f.label)} <input name="f_${f.k}" type="${f.type}"
+      ${f.step ? `step="${f.step}"` : ''} ${f.type === 'number' ? 'min="0"' : ''}></label>`;
+  }).join('');
+  $('#logExtras').innerHTML = html;
+}
+logCategory.addEventListener('change', renderLogExtras);
+
+logForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData(logForm);
+  const goatId = f.get('goatId');
+  if(!goatId || !goatById(goatId)){ toast('Add a goat first'); return; }
+
+  const category = f.get('category');
+  const data = {};
+  const cfg = CATEGORIES[category] || { fields: [] };
+  cfg.fields.forEach(fd => {
+    const v = f.get('f_' + fd.k);
+    if(v !== null && String(v).trim() !== '') data[fd.k] = String(v).trim();
+  });
+
+  const date = f.get('date') || todayISO();
+  const logId = uid();
+
+  state.logs.push({
+    id: logId, goatId, date, category,
+    details: (f.get('details') || '').trim(),
+    data, createdAt: Date.now()
+  });
+
+  // Auto-deduct inventory
+  let lowWarning = null;
+
+  if((category === 'Feeding') && data.feedId && data.feedQty){
+    const feed = feedById(data.feedId);
+    const qty = Number(data.feedQty);
+    if(feed && qty > 0){
+      feed.quantity = Math.max(0, (Number(feed.quantity) || 0) - qty);
+      state.inventoryLogs.push({
+        id: uid(), itemId: feed.id, kind: 'feed', action: 'use',
+        qty, date, goatId, notes: '', createdAt: Date.now()
+      });
+      if(stockStatus(feed) !== 'ok') lowWarning = `${feed.name} is ${stockStatus(feed)}`;
+    }
+  }
+  if((category === 'Medication' || category === 'Vaccination') && data.medId && data.medQty){
+    const med = medById(data.medId);
+    const qty = Number(data.medQty);
+    if(med && qty > 0){
+      med.quantity = Math.max(0, (Number(med.quantity) || 0) - qty);
+      state.inventoryLogs.push({
+        id: uid(), itemId: med.id, kind: 'medicine', action: 'use',
+        qty, date, goatId, notes: '', createdAt: Date.now()
+      });
+      if(stockStatus(med) !== 'ok') lowWarning = `${med.name} is ${stockStatus(med)}`;
+    }
+  }
+
+  save();
+  logForm.reset();
+  $('#logDate').value = todayISO();
+  renderLogExtras();
+  renderLogList();
+  fillGoatSelects();
+  renderInventory();
+  renderDashboard();
+  toast(lowWarning ? `Update saved · ⚠ ${lowWarning}` : 'Update saved');
+});
+
+$('#logFilter').addEventListener('change', renderLogList);
+
+function renderLogList(){
+  const filter = $('#logFilter').value;
+  let logs = sortedLogs(state.logs);
+  if(filter) logs = logs.filter(l => l.goatId === filter);
+  logs = logs.slice(0, 120);
+  $('#logList').innerHTML = logs.length ? logs.map(logItemHTML).join('') : '<p class="empty">No updates yet.</p>';
+}
+
+$('#logList').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-del-log]');
+  if(!btn) return;
+  if(!confirm('Delete this update? Note: inventory stock was already deducted and will not be restored.')) return;
+  state.logs = state.logs.filter(l => l.id !== btn.dataset.delLog);
+  save(); renderLogList(); renderDashboard(); renderGoats();
+  toast('Update deleted');
+});
+
+/* =========================================================
+   INVENTORY
+   ========================================================= */
+$('#invTabs').addEventListener('click', e => {
+  const b = e.target.closest('.subtab');
+  if(!b) return;
+  document.querySelectorAll('#invTabs .subtab').forEach(x =>
+    x.classList.toggle('active', x === b));
+  document.querySelectorAll('.subview').forEach(v =>
+    v.classList.toggle('hidden', v.id !== 'sub-' + b.dataset.sub));
+  if(b.dataset.sub === 'feeds') renderFeeds();
+  if(b.dataset.sub === 'medicines') renderMedicines();
+});
+
+// ---- Feed form ----
+$('#feedForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData($('#feedForm'));
+  const item = {
+    id: uid(),
+    name: (f.get('name') || '').trim(),
+    unit: (f.get('unit') || '').trim(),
+    quantity: Number(f.get('quantity')) || 0,
+    reorder: Number(f.get('reorder')) || 0,
+    notes: (f.get('notes') || '').trim(),
+    createdAt: Date.now()
+  };
+  if(!item.name){ toast('Name is required'); return; }
+  state.feeds.push(item);
+  if(item.quantity > 0){
+    state.inventoryLogs.push({
+      id: uid(), itemId: item.id, kind: 'feed', action: 'add',
+      qty: item.quantity, date: todayISO(), goatId: '', notes: 'Initial stock', createdAt: Date.now()
+    });
+  }
+  save(); $('#feedForm').reset();
+  $('#feedForm').quantity.value = 0;
+  $('#feedForm').reorder.value = 10;
+  $('#feedForm').unit.value = 'kg';
+  renderInventory(); renderDashboard();
+  toast('Feed added');
+});
+
+// ---- Feed stock top-up ----
+$('#feedStockForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData($('#feedStockForm'));
+  const item = feedById(f.get('itemId'));
+  const qty = Number(f.get('qty'));
+  const date = f.get('date') || todayISO();
+  if(!item || !qty || qty <= 0){ toast('Pick an item and quantity'); return; }
+  item.quantity = (Number(item.quantity) || 0) + qty;
+  state.inventoryLogs.push({
+    id: uid(), itemId: item.id, kind: 'feed', action: 'add',
+    qty, date, goatId: '', notes: '', createdAt: Date.now()
+  });
+  save(); $('#feedStockForm').reset();
+  $('#feedStockDate').value = todayISO();
+  renderInventory(); renderDashboard();
+  toast(`Added ${qty} to ${item.name}`);
+});
+
+// ---- Med form ----
+$('#medForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData($('#medForm'));
+  const item = {
+    id: uid(),
+    name: (f.get('name') || '').trim(),
+    unit: (f.get('unit') || '').trim(),
+    quantity: Number(f.get('quantity')) || 0,
+    reorder: Number(f.get('reorder')) || 0,
+    expiry: f.get('expiry') || '',
+    notes: (f.get('notes') || '').trim(),
+    createdAt: Date.now()
+  };
+  if(!item.name){ toast('Name is required'); return; }
+  state.medicines.push(item);
+  if(item.quantity > 0){
+    state.inventoryLogs.push({
+      id: uid(), itemId: item.id, kind: 'medicine', action: 'add',
+      qty: item.quantity, date: todayISO(), goatId: '', notes: 'Initial stock', createdAt: Date.now()
+    });
+  }
+  save(); $('#medForm').reset();
+  $('#medForm').quantity.value = 0;
+  $('#medForm').reorder.value = 5;
+  $('#medForm').unit.value = 'dose';
+  renderInventory(); renderDashboard();
+  toast('Medicine added');
+});
+
+// ---- Med stock top-up ----
+$('#medStockForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = new FormData($('#medStockForm'));
+  const item = medById(f.get('itemId'));
+  const qty = Number(f.get('qty'));
+  const date = f.get('date') || todayISO();
+  if(!item || !qty || qty <= 0){ toast('Pick an item and quantity'); return; }
+  item.quantity = (Number(item.quantity) || 0) + qty;
+  state.inventoryLogs.push({
+    id: uid(), itemId: item.id, kind: 'medicine', action: 'add',
+    qty, date, goatId: '', notes: '', createdAt: Date.now()
+  });
+  save(); $('#medStockForm').reset();
+  $('#medStockDate').value = todayISO();
+  renderInventory(); renderDashboard();
+  toast(`Added ${qty} to ${item.name}`);
+});
+
+function renderInventory(){
+  renderFeeds();
+  renderMedicines();
+  // fill stock top-up selects
+  const fs = $('#feedStockSelect');
+  const keepF = fs.value;
+  fs.innerHTML = state.feeds.length
+    ? state.feeds.map(x => `<option value="${x.id}">${esc(x.name)} (${x.quantity} ${esc(x.unit)})</option>`).join('')
+    : '<option value="">— no feeds yet —</option>';
+  if(keepF && feedById(keepF)) fs.value = keepF;
+  const ms = $('#medStockSelect');
+  const keepM = ms.value;
+  ms.innerHTML = state.medicines.length
+    ? state.medicines.map(x => `<option value="${x.id}">${esc(x.name)} (${x.quantity} ${esc(x.unit)})</option>`).join('')
+    : '<option value="">— no medicines yet —</option>';
+  if(keepM && medById(keepM)) ms.value = keepM;
+  // refresh log extras in case inventory changed
+  renderLogExtras();
+}
+
+function renderFeeds(){
+  const items = state.feeds;
+  const t = $('#feedTable');
+  if(!items.length){
+    t.innerHTML = '<p class="empty">No feeds yet. Add one above to get started.</p>';
+  } else {
+    t.innerHTML = `<table>
+      <thead><tr><th>Name</th><th class="num">On hand</th><th class="num">Reorder</th>
+      <th>Status</th><th>Notes</th><th></th></tr></thead>
+      <tbody>${items.map(f => `
+        <tr>
+          <td><b>${esc(f.name)}</b></td>
+          <td class="num">${f.quantity} ${esc(f.unit)}</td>
+          <td class="num">${f.reorder}</td>
+          <td>${stockBadge(f)}</td>
+          <td class="muted small">${esc(f.notes || '')}</td>
+          <td class="no-print"><button class="btn ghost" data-del-feed="${f.id}">Delete</button></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  }
+  renderInventoryLogs('feed', '#feedLogList');
+}
+
+function renderMedicines(){
+  const items = state.medicines;
+  const t = $('#medTable');
+  if(!items.length){
+    t.innerHTML = '<p class="empty">No medicines yet. Add one above to get started.</p>';
+  } else {
+    t.innerHTML = `<table>
+      <thead><tr><th>Name</th><th class="num">On hand</th><th class="num">Reorder</th>
+      <th>Status</th><th>Expiry</th><th>Notes</th><th></th></tr></thead>
+      <tbody>${items.map(m => `
+        <tr>
+          <td><b>${esc(m.name)}</b></td>
+          <td class="num">${m.quantity} ${esc(m.unit)}</td>
+          <td class="num">${m.reorder}</td>
+          <td>${stockBadge(m)}</td>
+          <td>${m.expiry ? fmtDate(m.expiry) + ' ' + expiryBadge(m) : '<span class="muted">—</span>'}</td>
+          <td class="muted small">${esc(m.notes || '')}</td>
+          <td class="no-print"><button class="btn ghost" data-del-med="${m.id}">Delete</button></td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  }
+  renderInventoryLogs('medicine', '#medLogList');
+}
+
+function renderInventoryLogs(kind, sel){
+  const logs = state.inventoryLogs
+    .filter(l => l.kind === kind)
+    .sort((a,b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 30);
+
+  const el = $(sel);
+  if(!logs.length){
+    el.innerHTML = '<p class="empty">No movements recorded yet.</p>';
+    return;
+  }
+  el.innerHTML = logs.map(l => {
+    const item = kind === 'feed' ? feedById(l.itemId) : medById(l.itemId);
+    const g = l.goatId ? goatById(l.goatId) : null;
+    const icon = l.action === 'add' ? '➕' : '➖';
+    const itemName = item ? `${item.name}` : '<em class="muted">deleted item</em>';
+    const goatPart = g ? ` → ${esc(goatLabel(g))}` : '';
+    const notePart = l.notes ? ` · ${esc(l.notes)}` : '';
+    return `<div class="log-item">
+      <div class="log-icon">${icon}</div>
+      <div class="log-body">
+        <div class="log-top">
+          <span class="log-title">${l.action === 'add' ? 'Added' : 'Used'} ${l.qty} ${item ? esc(item.unit) : ''} of ${itemName}${goatPart}</span>
+          <span class="log-date">${fmtDate(l.date)}</span>
+        </div>
+        ${notePart ? `<div class="log-detail">${notePart.replace(/^ · /,'')}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('click', e => {
+  const f = e.target.closest('button[data-del-feed]');
+  if(f){
+    const item = feedById(f.dataset.delFeed);
+    if(!item) return;
+    if(!confirm(`Delete feed "${item.name}"? Usage history will keep references but item details will be lost.`)) return;
+    state.feeds = state.feeds.filter(x => x.id !== item.id);
+    save(); renderInventory(); renderDashboard();
+    toast('Feed deleted');
+  }
+  const m = e.target.closest('button[data-del-med]');
+  if(m){
+    const item = medById(m.dataset.delMed);
+    if(!item) return;
+    if(!confirm(`Delete medicine "${item.name}"? Usage history will keep references but item details will be lost.`)) return;
+    state.medicines = state.medicines.filter(x => x.id !== item.id);
+    save(); renderInventory(); renderDashboard();
+    toast('Medicine deleted');
+  }
+});
+
+/* =========================================================
+   MILK VIEW
+   ========================================================= */
+['#milkGoat','#milkFrom','#milkTo'].forEach(sel =>
+  document.addEventListener('change', e => { if(e.target.matches(sel)) renderMilk(); }));
+
+function renderMilk(){
+  const goatId = $('#milkGoat').value;
+  const from = $('#milkFrom').value;
+  const to   = $('#milkTo').value;
+
+  let logs = state.logs.filter(l => l.category === 'Milk');
+  if(goatId) logs = logs.filter(l => l.goatId === goatId);
+  if(from) logs = logs.filter(l => l.date >= from);
+  if(to)   logs = logs.filter(l => l.date <= to);
+
+  // Daily aggregation
+  const byDay = {};
+  logs.forEach(l => {
+    const q = Number(l.data?.milk) || 0;
+    byDay[l.date] = (byDay[l.date] || 0) + q;
+  });
+  const days = Object.keys(byDay).sort();
+  const dailyPts = days.map(d => ({ date: d, value: byDay[d] }));
+  const total = dailyPts.reduce((s,p) => s + p.value, 0);
+  const avg = days.length ? (total / days.length) : 0;
+
+  // Per-goat aggregation
+  const byGoat = {};
+  logs.forEach(l => {
+    const q = Number(l.data?.milk) || 0;
+    if(!byGoat[l.goatId]) byGoat[l.goatId] = { total:0, days:0, best:0, bestDate:'' };
+    byGoat[l.goatId].total += q;
+    byGoat[l.goatId].days++;
+    if(q > byGoat[l.goatId].best){ byGoat[l.goatId].best = q; byGoat[l.goatId].bestDate = l.date; }
+  });
+
+  let bestProducer = null, bestTotal = -1;
+  Object.entries(byGoat).forEach(([id, d]) => {
+    if(d.total > bestTotal){ bestTotal = d.total; bestProducer = id; }
+  });
+
+  const bestG = bestProducer ? goatById(bestProducer) : null;
+
+  $('#milkSummary').innerHTML = `
+    <div class="card stat" style="animation-delay:0ms"><div class="n">${total.toFixed(1)}</div><div class="l">Total (L)</div></div>
+    <div class="card stat" style="animation-delay:60ms"><div class="n">${avg.toFixed(2)}</div><div class="l">Avg / day</div></div>
+    <div class="card stat" style="animation-delay:120ms"><div class="n">${bestG ? esc(bestG.tag) : '—'}</div><div class="l">Top producer</div></div>
+    <div class="card stat" style="animation-delay:180ms"><div class="n">${logs.length}</div><div class="l">Records</div></div>
+  `;
+
+  $('#milkChart').innerHTML = dailyPts.length >= 2
+    ? lineChart(dailyPts, { color:'#3a6b8a', unit:'L', yLabel:'L', dateLabelStart: fmtDate(days[0]), dateLabelEnd: fmtDate(days[days.length-1]) })
+    : '<p class="muted small">Add at least two milk records in this period to see a chart.</p>';
+
+  // Per-goat table
+  const goatRows = Object.entries(byGoat).map(([id, d]) => {
+    const g = goatById(id);
+    const avgPerDay = d.days ? (d.total / d.days) : 0;
+    return `<tr>
+      <td>${g ? esc(goatLabel(g)) : '<em class="muted">deleted goat</em>'}</td>
+      <td class="num">${d.days}</td>
+      <td class="num">${d.total.toFixed(1)} L</td>
+      <td class="num">${avgPerDay.toFixed(2)} L</td>
+      <td class="num">${d.best.toFixed(1)} L <span class="muted small">(${d.bestDate ? fmtDate(d.bestDate) : '—'})</span></td>
+    </tr>`;
+  }).join('');
+
+  $('#milkTable').innerHTML = goatRows
+    ? `<table>
+        <thead><tr><th>Goat</th><th class="num">Days</th><th class="num">Total</th>
+        <th class="num">Avg / day</th><th class="num">Best day</th></tr></thead>
+        <tbody>${goatRows}</tbody></table>`
+    : '<p class="empty">No milk records in this period.</p>';
+
+  // Recent milk records
+  const recent = sortedLogs(logs).slice(0, 20);
+  $('#milkLogList').innerHTML = recent.length
+    ? recent.map(l => {
+        const g = goatById(l.goatId);
+        const q = Number(l.data?.milk) || 0;
+        const sess = l.data?.session ? ` · ${esc(l.data.session)}` : '';
+        return `<div class="log-item">
+          <div class="log-icon">🥛</div>
+          <div class="log-body">
+            <div class="log-top">
+              <span class="log-title">${q} L — ${esc(g ? goatLabel(g) : 'Unknown goat')}${sess}</span>
+              <span class="log-date">${fmtDate(l.date)}</span>
+            </div>
+            ${l.details ? `<div class="log-detail">${esc(l.details)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')
+    : '<p class="empty">No milk records in this period.</p>';
+}
+
+/* =========================================================
+   REPORTS
+   ========================================================= */
+$('#btnReport').addEventListener('click', generateReport);
+$('#btnPrint').addEventListener('click', () => {
+  if(!$('#reportOut').dataset.ready){ generateReport(); }
+  setTimeout(() => window.print(), 60);
+});
+
+function replayFade(el){
+  el.classList.remove('fade-in');
+  void el.offsetWidth;
+  el.classList.add('fade-in');
+}
+
+function generateReport(){
+  const goatId = $('#repGoat').value;
+  const from = $('#repFrom').value;
+  const to   = $('#repTo').value;
+  const out  = $('#reportOut');
+
+  if(goatId === '__all' || !goatId){
+    out.innerHTML = herdReport(from, to);
+    out.dataset.ready = '1';
+    replayFade(out);
+    return;
+  }
+  const g = goatById(goatId);
+  if(!g){ out.innerHTML = '<p class="empty">Goat not found.</p>'; return; }
+
+  let logs = logsFor(g.id);
+  if(from) logs = logs.filter(l => l.date >= from);
+  if(to)   logs = logs.filter(l => l.date <= to);
+
+  const period = (from || to)
+    ? `${from ? fmtDate(from) : 'start'} → ${to ? fmtDate(to) : 'today'}`
+    : 'All time';
+
+  const dam  = g.damId  ? goatById(g.damId)  : null;
+  const sire = g.sireId ? goatById(g.sireId) : null;
+  const damText  = dam  ? `${dam.tag}${dam.name ? ' · ' + dam.name : ''}`  : '—';
+  const sireText = sire ? `${sire.tag}${sire.name ? ' · ' + sire.name : ''}` : '—';
+
+  const offspring = state.goats
+    .filter(k => k.damId === g.id || k.sireId === g.id)
+    .sort((a,b) => (a.dob || '').localeCompare(b.dob || ''));
+
+  const offspringRows = offspring.map(k => {
+    const role = k.damId === g.id ? 'Dam' : 'Sire';
+    const other = k.damId === g.id
+      ? (k.sireId ? goatById(k.sireId) : null)
+      : (k.damId  ? goatById(k.damId)  : null);
+    const otherLabel = other ? `${other.tag}${other.name ? ' · ' + other.name : ''}` : '—';
+    return `<tr>
+      <td>${esc(k.tag)}${k.name ? ' · ' + esc(k.name) : ''}</td>
+      <td>${k.dob ? fmtDate(k.dob) : '—'}</td>
+      <td>${esc(k.sex || '—')}</td>
+      <td>${esc(k.status || 'Active')}</td>
+      <td>${role === 'Dam' ? 'Sire: ' + esc(otherLabel) : 'Dam: ' + esc(otherLabel)}</td>
+    </tr>`;
+  }).join('');
+
+  const weights = logs.filter(l => l.category === 'Weight' && l.data?.weight)
+                      .map(l => ({ date: l.date, weight: Number(l.data.weight) }))
+                      .filter(p => !isNaN(p.weight))
+                      .sort((a,b) => a.date.localeCompare(b.date));
+
+  const totalMilk = logs.filter(l => l.category === 'Milk')
+                        .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
+  const totalCost = logs.reduce((s,l) => {
+    const c = Number(l.data?.cost); return s + (isNaN(c) ? 0 : c);
+  }, 0);
+  const totalIncome = logs.reduce((s,l) => {
+    const a = Number(l.data?.amount); return s + (isNaN(a) ? 0 : a);
+  }, 0);
+  const kids = logs.filter(l => l.category === 'Kidding')
+                   .reduce((s,l) => s + (Number(l.data?.kids) || 0), 0);
+  const firstW = weights[0]?.weight, lastW = weights[weights.length-1]?.weight;
+  const gain = (weights.length >= 2) ? (lastW - firstW).toFixed(1) : null;
+
+  // Feed & medicine consumption for this goat in this period
+  const myInvLogs = state.inventoryLogs.filter(l =>
+    l.goatId === g.id && l.action === 'use' &&
+    (!from || l.date >= from) && (!to || l.date <= to));
+
+  const feedTotals = {};
+  const medTotals = {};
+  myInvLogs.forEach(l => {
+    if(l.kind === 'feed'){
+      const it = feedById(l.itemId);
+      const key = it ? it.name : 'unknown';
+      feedTotals[key] = (feedTotals[key] || 0) + Number(l.qty);
+    } else {
+      const it = medById(l.itemId);
+      const key = it ? it.name : 'unknown';
+      medTotals[key] = (medTotals[key] || 0) + Number(l.qty);
+    }
+  });
+
+  const feedConsRows = Object.entries(feedTotals).map(([n,q]) => {
+    const item = state.feeds.find(f => f.name === n);
+    return `<tr><td>${esc(n)}</td><td class="num">${q} ${item ? esc(item.unit) : ''}</td></tr>`;
+  }).join('');
+  const medConsRows = Object.entries(medTotals).map(([n,q]) => {
+    const item = state.medicines.find(m => m.name === n);
+    return `<tr><td>${esc(n)}</td><td class="num">${q} ${item ? esc(item.unit) : ''}</td></tr>`;
+  }).join('');
+
+  const counts = {};
+  logs.forEach(l => counts[l.category] = (counts[l.category] || 0) + 1);
+  const countRows = Object.entries(counts)
+    .sort((a,b) => b[1] - a[1])
+    .map(([c,n]) => `<tr><td>${(CATEGORIES[c]?.icon || '📌')} ${esc(c)}</td><td class="num">${n}</td></tr>`)
+    .join('');
+
+  out.innerHTML = `
+    <div class="report-head">
+      <div>
+        <h2 style="margin:0">Goat Report — ${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}</h2>
+        <div class="muted small">Generated ${fmtDate(todayISO())} · Period: ${esc(period)}</div>
+      </div>
+      <div class="muted small">${esc(g.status || 'Active')}</div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><div class="k">Breed</div><div class="v">${esc(g.breed || '—')}</div></div>
+      <div class="fact"><div class="k">Sex</div><div class="v">${esc(g.sex || '—')}</div></div>
+      <div class="fact"><div class="k">Date of birth</div><div class="v">${g.dob ? fmtDate(g.dob) : '—'}</div></div>
+      <div class="fact"><div class="k">Age</div><div class="v">${ageFrom(g.dob)}</div></div>
+      <div class="fact"><div class="k">Dam</div><div class="v">${esc(damText)}</div></div>
+      <div class="fact"><div class="k">Sire</div><div class="v">${esc(sireText)}</div></div>
+      <div class="fact"><div class="k">Updates logged</div><div class="v">${logs.length}</div></div>
+      <div class="fact"><div class="k">Offspring recorded</div><div class="v">${offspring.length}</div></div>
+      <div class="fact"><div class="k">Latest weight</div><div class="v">${lastW != null ? lastW + ' kg' : '—'}</div></div>
+      <div class="fact"><div class="k">Weight change</div><div class="v">${gain != null ? (gain > 0 ? '+' : '') + gain + ' kg' : '—'}</div></div>
+      <div class="fact"><div class="k">Milk recorded</div><div class="v">${totalMilk ? totalMilk.toFixed(1) + ' L' : '—'}</div></div>
+      <div class="fact"><div class="k">Kids born (logs)</div><div class="v">${kids || '—'}</div></div>
+      <div class="fact"><div class="k">Costs</div><div class="v">${totalCost ? totalCost.toFixed(2) : '—'}</div></div>
+      <div class="fact"><div class="k">Income</div><div class="v">${totalIncome ? totalIncome.toFixed(2) : '—'}</div></div>
+    </div>
+
+    ${g.notes ? `<p class="small"><b>Notes:</b> ${esc(g.notes)}</p>` : ''}
+
+    <h3>Growth chart (weight)</h3>
+    <div class="chart-wrap">${weightChart(weights)}</div>
+
+    ${countRows ? `<h3>Activity breakdown</h3>
+      <table style="margin-bottom:18px"><thead><tr><th>Category</th><th class="num">Entries</th></tr></thead>
+      <tbody>${countRows}</tbody></table>` : ''}
+
+    ${feedConsRows ? `<h3>Feed consumed in period</h3>
+      <table style="margin-bottom:18px">
+        <thead><tr><th>Feed</th><th class="num">Total</th></tr></thead>
+        <tbody>${feedConsRows}</tbody></table>` : ''}
+
+    ${medConsRows ? `<h3>Medicine used in period</h3>
+      <table style="margin-bottom:18px">
+        <thead><tr><th>Medicine</th><th class="num">Total</th></tr></thead>
+        <tbody>${medConsRows}</tbody></table>` : ''}
+
+    ${offspring.length ? `
+      <h3>Offspring recorded (${offspring.length})</h3>
+      <table style="margin-bottom:18px">
+        <thead><tr><th>Tag</th><th>Born</th><th>Sex</th><th>Status</th><th>Other parent</th></tr></thead>
+        <tbody>${offspringRows}</tbody>
+      </table>` : ''}
+
+    <h3>Full history</h3>
+    ${logs.length ? `<table>
+      <thead><tr><th style="width:110px">Date</th><th style="width:130px">Category</th><th>Details</th></tr></thead>
+      <tbody>${logs.map(l => `
+        <tr>
+          <td>${fmtDate(l.date)}</td>
+          <td>${(CATEGORIES[l.category]?.icon || '📌')} ${esc(l.category)}</td>
+          <td>${esc(formatLogData(l)) || '<span class="muted">—</span>'}</td>
+        </tr>`).join('')}
+      </tbody></table>`
+      : '<p class="empty">No updates in this period.</p>'}
+
+    <p class="muted small" style="margin-top:20px">Goat Farm Manager · report for ${esc(g.tag)} · ${esc(period)}</p>`;
+  out.dataset.ready = '1';
+  replayFade(out);
+}
+
+function herdReport(from, to){
+  const period = (from || to)
+    ? `${from ? fmtDate(from) : 'start'} → ${to ? fmtDate(to) : 'today'}`
+    : 'All time';
+  let logs = sortedLogs(state.logs);
+  if(from) logs = logs.filter(l => l.date >= from);
+  if(to)   logs = logs.filter(l => l.date <= to);
+
+  const totalMilk = logs.filter(l => l.category === 'Milk')
+                        .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
+  const totalCost = logs.reduce((s,l) => {
+    const c = Number(l.data?.cost); return s + (isNaN(c) ? 0 : c);
+  }, 0);
+  const kids = logs.filter(l => l.category === 'Kidding')
+                   .reduce((s,l) => s + (Number(l.data?.kids) || 0), 0);
+
+  const rows = state.goats.map(g => {
+    const gl = logs.filter(l => l.goatId === g.id);
+    const w = gl.filter(l => l.category === 'Weight' && l.data?.weight);
+    const lastW = w.length ? Number(w[0].data.weight) : null;
+    const milk = gl.filter(l => l.category === 'Milk')
+                   .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
+    const dam = g.damId ? goatById(g.damId) : null;
+    const sire = g.sireId ? goatById(g.sireId) : null;
+    const parentBits = [];
+    if(dam) parentBits.push(`D:${dam.tag}`);
+    if(sire) parentBits.push(`S:${sire.tag}`);
+    return `<tr>
+      <td>${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}</td>
+      <td>${esc(g.status || 'Active')}</td>
+      <td>${ageFrom(g.dob)}</td>
+      <td class="muted small">${esc(parentBits.join(' · ')) || '—'}</td>
+      <td class="num">${lastW != null ? lastW + ' kg' : '—'}</td>
+      <td class="num">${milk ? milk.toFixed(1) + ' L' : '—'}</td>
+      <td class="num">${gl.length}</td>
+    </tr>`;
+  }).join('');
+
+  // Inventory snapshot
+  const lowFeed = state.feeds.filter(f => stockStatus(f) !== 'ok');
+  const lowMed  = state.medicines.filter(m => stockStatus(m) !== 'ok');
+  const expSoon = state.medicines.filter(m => {
+    if(!m.expiry) return false;
+    const d = daysUntil(m.expiry);
+    return d !== null && d <= 30;
+  });
+
+  return `
+    <div class="report-head">
+      <div>
+        <h2 style="margin:0">Herd Summary Report</h2>
+        <div class="muted small">Generated ${fmtDate(todayISO())} · Period: ${esc(period)}</div>
+      </div>
+      <div class="muted small">${state.goats.length} goat(s) registered</div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><div class="k">Goats</div><div class="v">${state.goats.length}</div></div>
+      <div class="fact"><div class="k">Updates in period</div><div class="v">${logs.length}</div></div>
+      <div class="fact"><div class="k">Milk recorded</div><div class="v">${totalMilk ? totalMilk.toFixed(1) + ' L' : '—'}</div></div>
+      <div class="fact"><div class="k">Kids born</div><div class="v">${kids || '—'}</div></div>
+      <div class="fact"><div class="k">Total costs</div><div class="v">${totalCost ? totalCost.toFixed(2) : '—'}</div></div>
+      <div class="fact"><div class="k">Feed items low</div><div class="v">${lowFeed.length}</div></div>
+      <div class="fact"><div class="k">Medicines low</div><div class="v">${lowMed.length}</div></div>
+      <div class="fact"><div class="k">Expiring soon</div><div class="v">${expSoon.length}</div></div>
+    </div>
+
+    ${(lowFeed.length || lowMed.length || expSoon.length) ? `
+      <h3>Inventory alerts</h3>
+      <table style="margin-bottom:18px">
+        <thead><tr><th>Item</th><th>Type</th><th>Status</th><th class="num">On hand</th><th>Expiry</th></tr></thead>
+        <tbody>
+          ${lowFeed.map(f => `<tr><td>${esc(f.name)}</td><td>Feed</td><td>${stockBadge(f)}</td>
+            <td class="num">${f.quantity} ${esc(f.unit)}</td><td>—</td></tr>`).join('')}
+          ${lowMed.map(m => `<tr><td>${esc(m.name)}</td><td>Medicine</td><td>${stockBadge(m)}</td>
+            <td class="num">${m.quantity} ${esc(m.unit)}</td><td>${m.expiry ? fmtDate(m.expiry) : '—'}</td></tr>`).join('')}
+          ${expSoon.filter(m => stockStatus(m) === 'ok').map(m => `<tr><td>${esc(m.name)}</td><td>Medicine</td>
+            <td>${expiryBadge(m)}</td><td class="num">${m.quantity} ${esc(m.unit)}</td>
+            <td>${fmtDate(m.expiry)}</td></tr>`).join('')}
+        </tbody>
+      </table>` : ''}
+
+    <h3>Per-goat overview</h3>
+    ${state.goats.length ? `<table>
+      <thead><tr><th>Goat</th><th>Status</th><th>Age</th><th>Parents</th>
+      <th class="num">Last weight</th><th class="num">Milk</th><th class="num">Updates</th></tr></thead>
+      <tbody>${rows}</tbody></table>`
+      : '<p class="empty">No goats registered.</p>'}
+
+    <h3 style="margin-top:20px">Recent activity</h3>
+    ${logs.length ? logs.slice(0, 40).map(logItemHTML).join('')
+      : '<p class="empty">No updates in this period.</p>'}
+  `;
+}
+
+/* ---------- Charts ---------- */
+function lineChart(pts, opts = {}){
+  const { color = '#4a7c59', unit = '', width = 660, height = 190 } = opts;
+  if(pts.length < 2){
+    return '<p class="muted small">Add at least two records to see a chart.</p>';
+  }
+  const W = width, H = height, pad = { l: 42, r: 16, t: 16, b: 30 };
+  const xs = pts.map(p => new Date(p.date + 'T00:00:00').getTime());
+  const ys = pts.map(p => Number(p.value) || 0);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const spanY = (maxY - minY) || Math.max(1, maxY * 0.1);
+  const y0 = Math.max(0, minY - spanY * 0.2), y1 = maxY + spanY * 0.2;
+
+  const px = x => pad.l + ((x - minX) / ((maxX - minX) || 1)) * (W - pad.l - pad.r);
+  const py = y => H - pad.b - ((y - y0) / ((y1 - y0) || 1)) * (H - pad.t - pad.b);
+
+  const path = pts.map((p,i) => `${i ? 'L' : 'M'}${px(xs[i]).toFixed(1)},${py(ys[i]).toFixed(1)}`).join(' ');
+  const dots = pts.map((p,i) =>
+    `<circle cx="${px(xs[i]).toFixed(1)}" cy="${py(ys[i]).toFixed(1)}" r="3.5" fill="${color}">
+       <title>${fmtDate(p.date)} — ${ys[i]} ${unit}</title></circle>`).join('');
+
+  const grid = [y0 + (y1-y0)*0.25, y0 + (y1-y0)*0.5, y0 + (y1-y0)*0.75].map(y =>
+    `<line x1="${pad.l}" x2="${W-pad.r}" y1="${py(y).toFixed(1)}" y2="${py(y).toFixed(1)}"
+       stroke="#f0e6d8" stroke-width="1"/>
+     <text x="${pad.l-8}" y="${(py(y)+4).toFixed(1)}" font-size="10" fill="#8b7a66"
+       text-anchor="end">${y.toFixed(0)}</text>`).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Chart">
+    ${grid}
+    <line x1="${pad.l}" x2="${W-pad.r}" y1="${H-pad.b}" y2="${H-pad.b}" stroke="#e3d6c4"/>
+    <line x1="${pad.l}" x2="${pad.l}" y1="${pad.t}" y2="${H-pad.b}" stroke="#e3d6c4"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    <text x="${pad.l}" y="${H-10}" font-size="10" fill="#8b7a66">${fmtDate(pts[0].date)}</text>
+    <text x="${W-pad.r}" y="${H-10}" font-size="10" fill="#8b7a66" text-anchor="end">${fmtDate(pts[pts.length-1].date)}</text>
+    <text x="${pad.l-8}" y="${pad.t-4}" font-size="10" fill="#8b7a66" text-anchor="end">${esc(unit)}</text>
+  </svg>`;
+}
+
+function weightChart(pts){
+  if(pts.length < 2) return '<p class="muted small">Add at least two weight records to see a growth chart.</p>';
+  return lineChart(pts.map(p => ({ date: p.date, value: p.weight })), { color:'#4a7c59', unit:'kg' });
+}
+
+/* =========================================================
+   DATA: export / import / sample / clear
+   ========================================================= */
+$('#btnExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `goat-farm-backup-${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Backup downloaded');
+});
+
+$('#btnImport').addEventListener('click', () => $('#fileImport').click());
+
+$('#fileImport').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const p = JSON.parse(reader.result);
+      if(!p || !Array.isArray(p.goats) || !Array.isArray(p.logs)) throw new Error('bad format');
+      if(!confirm('Replace all current data with the imported file?')) return;
+      state.goats = p.goats;
+      state.logs  = p.logs;
+      state.feeds = Array.isArray(p.feeds) ? p.feeds : [];
+      state.medicines = Array.isArray(p.medicines) ? p.medicines : [];
+      state.inventoryLogs = Array.isArray(p.inventoryLogs) ? p.inventoryLogs : [];
+      save(); renderAll();
+      toast('Backup imported');
+    } catch(err){ toast('Invalid backup file'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+$('#btnClear').addEventListener('click', () => {
+  if(!confirm('Delete ALL goats, updates, inventory and history? This cannot be undone.')) return;
+  state = { goats: [], logs: [], feeds: [], medicines: [], inventoryLogs: [] };
+  save(); renderAll(); resetGoatForm();
+  toast('All data cleared');
+});
+
+$('#btnSample').addEventListener('click', () => {
+  if((state.goats.length || state.feeds.length || state.medicines.length) &&
+     !confirm('Add sample data on top of your existing records?')) return;
+  loadSampleData();
+  save(); renderAll();
+  toast('Sample data loaded');
+});
+
+function loadSampleData(){
+  const d = n => {
+    const x = new Date(Date.now() - n*86400000);
+    return new Date(x.getTime() - x.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  };
+
+  // Feeds
+  const fHay = { id: uid(), name:'Rhodes hay', unit:'kg', quantity:180, reorder:40, notes:'Local supplier', createdAt: Date.now() };
+  const fDairy = { id: uid(), name:'Dairy meal', unit:'kg', quantity:55, reorder:20, notes:'Brand X', createdAt: Date.now() };
+  const fMin = { id: uid(), name:'Mineral mix', unit:'kg', quantity:8, reorder:5, notes:'', createdAt: Date.now() };
+  state.feeds.push(fHay, fDairy, fMin);
+
+  // Medicines
+  const mDew = { id: uid(), name:'Dewormer (Albendazole)', unit:'ml', quantity:400, reorder:100,
+                 expiry: d(-200), notes:'', createdAt: Date.now() };
+  const mVac = { id: uid(), name:'CD&T vaccine', unit:'dose', quantity:18, reorder:6,
+                 expiry: d(-120), notes:'Keep refrigerated', createdAt: Date.now() };
+  const mAnti = { id: uid(), name:'Antibiotic (Oxytet)', unit:'ml', quantity:90, reorder:50,
+                  expiry: d(15), notes:'Use before expiry', createdAt: Date.now() };
+  state.medicines.push(mDew, mVac, mAnti);
+
+  state.inventoryLogs.push(
+    { id: uid(), itemId: fHay.id, kind:'feed', action:'add', qty:180, date: d(30), goatId:'', notes:'Initial stock', createdAt: Date.now() },
+    { id: uid(), itemId: fDairy.id, kind:'feed', action:'add', qty:55, date: d(30), goatId:'', notes:'Initial stock', createdAt: Date.now() },
+    { id: uid(), itemId: mDew.id, kind:'medicine', action:'add', qty:400, date: d(30), goatId:'', notes:'Initial stock', createdAt: Date.now() },
+    { id: uid(), itemId: mVac.id, kind:'medicine', action:'add', qty:18, date: d(30), goatId:'', notes:'Initial stock', createdAt: Date.now() }
+  );
+
+  // Goats
+  const buck = { id: uid(), tag:'003', name:'Rocky', breed:'Boer', sex:'Male',
+                 dob: d(1200), status:'Active', notes:'Breeding buck.', createdAt: Date.now() };
+  const doe1 = { id: uid(), tag:'005', name:'Bella', breed:'Alpine', sex:'Female',
+                 dob: d(900), status:'Lactating', notes:'Friendly, good milker.', createdAt: Date.now() };
+  const doe2 = { id: uid(), tag:'012', name:'Coco', breed:'Boer', sex:'Female',
+                 dob: d(600), status:'Pregnant', notes:'Due in ~6 weeks.', createdAt: Date.now() };
+  state.goats.push(buck, doe1, doe2);
+
+  const kid1 = { id: uid(), tag:'24-001', name:'Pip', breed:'Alpine × Boer', sex:'Female',
+                 dob: d(45), status:'Active', damId: doe1.id, sireId: buck.id, notes:'', createdAt: Date.now() };
+  const kid2 = { id: uid(), tag:'24-002', name:'Nutmeg', breed:'Boer', sex:'Male',
+                 dob: d(20), status:'Active', damId: doe2.id, sireId: buck.id, notes:'', createdAt: Date.now() };
+  state.goats.push(kid1, kid2);
+
+  const mk = (goat, date, category, details, data) =>
+    state.logs.push({ id: uid(), goatId: goat.id, date, category, details, data, createdAt: Date.now() });
+
+  // Bella logs
+  mk(doe1, d(30), 'Weight', 'Monthly weighing', { weight:'38.5' });
+  mk(doe1, d(20), 'Milk', 'Morning milking', { milk:'1.3', session:'Morning' });
+  mk(doe1, d(20), 'Milk', 'Evening milking', { milk:'1.1', session:'Evening' });
+  mk(doe1, d(15), 'Weight', 'Monthly weighing', { weight:'39.8' });
+  mk(doe1, d(10), 'Health', 'Routine check, healthy', { cost:'0' });
+  mk(doe1, d(5), 'Milk', 'Both sessions', { milk:'2.7', session:'Both' });
+  mk(doe1, d(2), 'Weight', 'Monthly weighing', { weight:'41.0' });
+  mk(doe1, d(1), 'Feeding', '', { feedId: fHay.id, feedQty:'1.5', feed:'Hay' });
+  mk(doe1, d(1), 'Feeding', '', { feedId: fDairy.id, feedQty:'0.5' });
+
+  // Coco logs
+  mk(doe2, d(40), 'Breeding', 'Mated with Rocky', { nextDue: d(-30), cost:'0' });
+  mk(doe2, d(25), 'Weight', 'Pre-pregnancy', { weight:'44.2' });
+  mk(doe2, d(12), 'Vaccination', 'CD&T vaccine', { medId: mVac.id, medQty:'1', cost:'6.50', nextDue: d(-353) });
+  mk(doe2, d(6), 'Weight', 'Gaining well', { weight:'47.9' });
+  mk(doe2, d(3), 'Observation', 'Slightly restless, watching closely', {});
+
+  // Buck logs
+  mk(buck, d(18), 'Weight', 'Quarterly', { weight:'62.0' });
+  mk(buck, d(9), 'Medication', 'Dewormer dose 1', { medId: mDew.id, medQty:'10', cost:'0' });
+  mk(buck, d(4), 'Weight', 'Quarterly', { weight:'63.5' });
+  mk(buck, d(1), 'Observation', 'Hooves trimmed', {});
+
+  // Kids
+  mk(kid1, d(30), 'Weight', 'First weighing', { weight:'6.2' });
+  mk(kid1, d(15), 'Weight', 'Growing well', { weight:'9.1' });
+  mk(kid1, d(2), 'Weight', 'Latest', { weight:'12.4' });
+  mk(kid2, d(15), 'Weight', 'First weighing', { weight:'5.8' });
+  mk(kid2, d(2), 'Weight', 'Latest', { weight:'8.9' });
+
+  // Extra milk records for the milk view
+  mk(doe1, d(7), 'Milk', 'Weekly summary', { milk:'2.5', session:'Both' });
+  mk(doe1, d(3), 'Milk', 'Good yield', { milk:'2.6', session:'Both' });
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+function renderAll(){
+  fillGoatSelects();
+  fillMilkGoatSelect();
+  renderDashboard();
+  renderGoats();
+  renderLogList();
+  renderLogExtras();
+  fillParentSelects(editingGoatId);
+  renderInventory();
+  renderMilk();
+}
+
+(function init(){
+  load();
+  $('#logDate').value = todayISO();
+  $('#feedStockDate').value = todayISO();
+  $('#medStockDate').value = todayISO();
+  const today = new Date();
+  const monthAgo = new Date(today.getTime() - 30*86400000).toISOString().slice(0,10);
+  const weekAgo = new Date(today.getTime() - 6*86400000).toISOString().slice(0,10);
+  $('#repFrom').value = monthAgo;
+  $('#repTo').value = todayISO();
+  $('#milkFrom').value = monthAgo;
+  $('#milkTo').value = todayISO();
+
+  renderAll();
+
+  if(!state.goats.length){
+    $('#reportOut').innerHTML = '<p class="empty">No data yet. Add goats and daily updates, then generate a report here.</p>';
+  } else {
+    generateReport();
+  }
+})();
+</script>
+</body>
+</html>
