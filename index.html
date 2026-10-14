@@ -106,7 +106,6 @@
   .space{justify-content:space-between}
   .mini{width:auto;min-width:150px;padding:6px 10px;font-size:13px}
 
-  /* Sub tabs */
   .subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
   .subtab{
     border:1px solid var(--line);background:#fffdf9;color:var(--muted);
@@ -322,7 +321,6 @@
       <button class="subtab" data-sub="medicines">💊 Medicines</button>
     </div>
 
-    <!-- FEEDS -->
     <div id="sub-feeds" class="subview">
       <div class="card no-print">
         <h3>Add feed item</h3>
@@ -361,7 +359,6 @@
       </div>
     </div>
 
-    <!-- MEDICINES -->
     <div id="sub-medicines" class="subview hidden">
       <div class="card no-print">
         <h3>Add medicine / vaccine</h3>
@@ -439,6 +436,16 @@
         <label>Goat <select id="repGoat"></select></label>
         <label>From <input type="date" id="repFrom"></label>
         <label>To <input type="date" id="repTo"></label>
+        <label>Sort herd report by
+          <select id="repSort">
+            <option value="tag-status">Tag, then status</option>
+            <option value="status-tag">Status, then tag</option>
+            <option value="tag">Tag only</option>
+            <option value="status">Status only</option>
+            <option value="youngest">Youngest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </label>
         <div class="full actions">
           <button class="btn primary" id="btnReport">Generate report</button>
           <button class="btn" id="btnPrint">🖨 Print / Save PDF</button>
@@ -454,12 +461,13 @@
 
 <script>
 /* =========================================================
-   Goat Farm Manager — logic (with inventory & milk)
+   Goat Farm Manager — logic
    ========================================================= */
 
 const $  = s => document.querySelector(s);
 
 const STORE_KEY = 'goatfarm.v1';
+const REP_SORT_KEY = 'goatfarm.repSort.v1';
 let state = { goats: [], logs: [], feeds: [], medicines: [], inventoryLogs: [] };
 let editingGoatId = null;
 
@@ -532,6 +540,63 @@ function daysUntil(iso){
   if(isNaN(t)) return null;
   const now = new Date(); now.setHours(0,0,0,0);
   return Math.round((t - now) / 86400000);
+}
+
+/* ---------- Natural sort for tags ---------- */
+function naturalCompare(a, b){
+  const ax = String(a ?? '').match(/(\d+|\D+)/g) || [];
+  const bx = String(b ?? '').match(/(\d+|\D+)/g) || [];
+  const len = Math.max(ax.length, bx.length);
+  for(let i = 0; i < len; i++){
+    const an = ax[i], bn = bx[i];
+    if(an === undefined) return -1;
+    if(bn === undefined) return 1;
+    const anum = /^\d+$/.test(an), bnum = /^\d+$/.test(bn);
+    if(anum && bnum){
+      const d = Number(an) - Number(bn);
+      if(d) return d;
+    } else {
+      const c = an.localeCompare(bn, undefined, { sensitivity: 'base' });
+      if(c) return c;
+    }
+  }
+  return 0;
+}
+
+/* Status priority order: Active → Lactating → Pregnant → Dry → Sold → Deceased */
+const STATUS_ORDER = { Active:1, Lactating:2, Pregnant:3, Dry:4, Sold:5, Deceased:6 };
+function statusRank(s){ return STATUS_ORDER[s] || 99; }
+
+function sortGoats(goats, mode){
+  const arr = [...goats];
+  const byTag = (a,b) => naturalCompare(a.tag, b.tag);
+  const byStatus = (a,b) => statusRank(a.status) - statusRank(b.status);
+
+  switch(mode){
+    case 'status-tag':
+      return arr.sort((a,b) => byStatus(a,b) || byTag(a,b));
+    case 'tag':
+      return arr.sort(byTag);
+    case 'status':
+      return arr.sort((a,b) => byStatus(a,b) || byTag(a,b));
+    case 'youngest':
+      return arr.sort((a,b) => {
+        if(!a.dob && !b.dob) return byTag(a,b);
+        if(!a.dob) return 1;
+        if(!b.dob) return -1;
+        return b.dob.localeCompare(a.dob) || byTag(a,b);
+      });
+    case 'oldest':
+      return arr.sort((a,b) => {
+        if(!a.dob && !b.dob) return byTag(a,b);
+        if(!a.dob) return 1;
+        if(!b.dob) return -1;
+        return a.dob.localeCompare(b.dob) || byTag(a,b);
+      });
+    case 'tag-status':
+    default:
+      return arr.sort((a,b) => byTag(a,b) || byStatus(a,b));
+  }
 }
 
 function save(){
@@ -637,7 +702,6 @@ $('#tabs').addEventListener('click', e => {
   if(b) switchTab(b.dataset.tab);
 });
 
-/* ---------- Header shadow ---------- */
 const headerEl = document.querySelector('header');
 window.addEventListener('scroll', () => {
   headerEl.classList.toggle('scrolled', window.scrollY > 6);
@@ -994,9 +1058,7 @@ logForm.addEventListener('submit', e => {
     data, createdAt: Date.now()
   });
 
-  // Auto-deduct inventory
   let lowWarning = null;
-
   if((category === 'Feeding') && data.feedId && data.feedQty){
     const feed = feedById(data.feedId);
     const qty = Number(data.feedQty);
@@ -1066,7 +1128,6 @@ $('#invTabs').addEventListener('click', e => {
   if(b.dataset.sub === 'medicines') renderMedicines();
 });
 
-// ---- Feed form ----
 $('#feedForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#feedForm'));
@@ -1095,7 +1156,6 @@ $('#feedForm').addEventListener('submit', e => {
   toast('Feed added');
 });
 
-// ---- Feed stock top-up ----
 $('#feedStockForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#feedStockForm'));
@@ -1114,7 +1174,6 @@ $('#feedStockForm').addEventListener('submit', e => {
   toast(`Added ${qty} to ${item.name}`);
 });
 
-// ---- Med form ----
 $('#medForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#medForm'));
@@ -1144,7 +1203,6 @@ $('#medForm').addEventListener('submit', e => {
   toast('Medicine added');
 });
 
-// ---- Med stock top-up ----
 $('#medStockForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#medStockForm'));
@@ -1166,7 +1224,6 @@ $('#medStockForm').addEventListener('submit', e => {
 function renderInventory(){
   renderFeeds();
   renderMedicines();
-  // fill stock top-up selects
   const fs = $('#feedStockSelect');
   const keepF = fs.value;
   fs.innerHTML = state.feeds.length
@@ -1179,7 +1236,6 @@ function renderInventory(){
     ? state.medicines.map(x => `<option value="${x.id}">${esc(x.name)} (${x.quantity} ${esc(x.unit)})</option>`).join('')
     : '<option value="">— no medicines yet —</option>';
   if(keepM && medById(keepM)) ms.value = keepM;
-  // refresh log extras in case inventory changed
   renderLogExtras();
 }
 
@@ -1298,7 +1354,6 @@ function renderMilk(){
   if(from) logs = logs.filter(l => l.date >= from);
   if(to)   logs = logs.filter(l => l.date <= to);
 
-  // Daily aggregation
   const byDay = {};
   logs.forEach(l => {
     const q = Number(l.data?.milk) || 0;
@@ -1309,7 +1364,6 @@ function renderMilk(){
   const total = dailyPts.reduce((s,p) => s + p.value, 0);
   const avg = days.length ? (total / days.length) : 0;
 
-  // Per-goat aggregation
   const byGoat = {};
   logs.forEach(l => {
     const q = Number(l.data?.milk) || 0;
@@ -1334,10 +1388,9 @@ function renderMilk(){
   `;
 
   $('#milkChart').innerHTML = dailyPts.length >= 2
-    ? lineChart(dailyPts, { color:'#3a6b8a', unit:'L', yLabel:'L', dateLabelStart: fmtDate(days[0]), dateLabelEnd: fmtDate(days[days.length-1]) })
+    ? lineChart(dailyPts, { color:'#3a6b8a', unit:'L' })
     : '<p class="muted small">Add at least two milk records in this period to see a chart.</p>';
 
-  // Per-goat table
   const goatRows = Object.entries(byGoat).map(([id, d]) => {
     const g = goatById(id);
     const avgPerDay = d.days ? (d.total / d.days) : 0;
@@ -1357,7 +1410,6 @@ function renderMilk(){
         <tbody>${goatRows}</tbody></table>`
     : '<p class="empty">No milk records in this period.</p>';
 
-  // Recent milk records
   const recent = sortedLogs(logs).slice(0, 20);
   $('#milkLogList').innerHTML = recent.length
     ? recent.map(l => {
@@ -1387,6 +1439,12 @@ $('#btnPrint').addEventListener('click', () => {
   setTimeout(() => window.print(), 60);
 });
 
+/* Persist sort preference */
+$('#repSort').addEventListener('change', () => {
+  try { localStorage.setItem(REP_SORT_KEY, $('#repSort').value); } catch(e){}
+  if($('#reportOut').dataset.ready) generateReport();
+});
+
 function replayFade(el){
   el.classList.remove('fade-in');
   void el.offsetWidth;
@@ -1397,10 +1455,11 @@ function generateReport(){
   const goatId = $('#repGoat').value;
   const from = $('#repFrom').value;
   const to   = $('#repTo').value;
+  const sortMode = $('#repSort').value || 'tag-status';
   const out  = $('#reportOut');
 
   if(goatId === '__all' || !goatId){
-    out.innerHTML = herdReport(from, to);
+    out.innerHTML = herdReport(from, to, sortMode);
     out.dataset.ready = '1';
     replayFade(out);
     return;
@@ -1458,13 +1517,11 @@ function generateReport(){
   const firstW = weights[0]?.weight, lastW = weights[weights.length-1]?.weight;
   const gain = (weights.length >= 2) ? (lastW - firstW).toFixed(1) : null;
 
-  // Feed & medicine consumption for this goat in this period
   const myInvLogs = state.inventoryLogs.filter(l =>
     l.goatId === g.id && l.action === 'use' &&
     (!from || l.date >= from) && (!to || l.date <= to));
 
-  const feedTotals = {};
-  const medTotals = {};
+  const feedTotals = {}, medTotals = {};
   myInvLogs.forEach(l => {
     if(l.kind === 'feed'){
       const it = feedById(l.itemId);
@@ -1562,10 +1619,11 @@ function generateReport(){
   replayFade(out);
 }
 
-function herdReport(from, to){
+function herdReport(from, to, sortMode){
   const period = (from || to)
     ? `${from ? fmtDate(from) : 'start'} → ${to ? fmtDate(to) : 'today'}`
     : 'All time';
+
   let logs = sortedLogs(state.logs);
   if(from) logs = logs.filter(l => l.date >= from);
   if(to)   logs = logs.filter(l => l.date <= to);
@@ -1578,7 +1636,10 @@ function herdReport(from, to){
   const kids = logs.filter(l => l.category === 'Kidding')
                    .reduce((s,l) => s + (Number(l.data?.kids) || 0), 0);
 
-  const rows = state.goats.map(g => {
+  /* Sorted goats — this is the update you asked for */
+  const sortedGoats = sortGoats(state.goats, sortMode || 'tag-status');
+
+  const rows = sortedGoats.map(g => {
     const gl = logs.filter(l => l.goatId === g.id);
     const w = gl.filter(l => l.category === 'Weight' && l.data?.weight);
     const lastW = w.length ? Number(w[0].data.weight) : null;
@@ -1600,7 +1661,6 @@ function herdReport(from, to){
     </tr>`;
   }).join('');
 
-  // Inventory snapshot
   const lowFeed = state.feeds.filter(f => stockStatus(f) !== 'ok');
   const lowMed  = state.medicines.filter(m => stockStatus(m) !== 'ok');
   const expSoon = state.medicines.filter(m => {
@@ -1609,11 +1669,20 @@ function herdReport(from, to){
     return d !== null && d <= 30;
   });
 
+  const sortLabel = {
+    'tag-status': 'Tag, then status',
+    'status-tag': 'Status, then tag',
+    'tag': 'Tag only',
+    'status': 'Status only',
+    'youngest': 'Youngest first',
+    'oldest': 'Oldest first'
+  }[sortMode] || 'Tag, then status';
+
   return `
     <div class="report-head">
       <div>
         <h2 style="margin:0">Herd Summary Report</h2>
-        <div class="muted small">Generated ${fmtDate(todayISO())} · Period: ${esc(period)}</div>
+        <div class="muted small">Generated ${fmtDate(todayISO())} · Period: ${esc(period)} · Sorted: ${esc(sortLabel)}</div>
       </div>
       <div class="muted small">${state.goats.length} goat(s) registered</div>
     </div>
@@ -1761,13 +1830,11 @@ function loadSampleData(){
     return new Date(x.getTime() - x.getTimezoneOffset()*60000).toISOString().slice(0,10);
   };
 
-  // Feeds
   const fHay = { id: uid(), name:'Rhodes hay', unit:'kg', quantity:180, reorder:40, notes:'Local supplier', createdAt: Date.now() };
   const fDairy = { id: uid(), name:'Dairy meal', unit:'kg', quantity:55, reorder:20, notes:'Brand X', createdAt: Date.now() };
   const fMin = { id: uid(), name:'Mineral mix', unit:'kg', quantity:8, reorder:5, notes:'', createdAt: Date.now() };
   state.feeds.push(fHay, fDairy, fMin);
 
-  // Medicines
   const mDew = { id: uid(), name:'Dewormer (Albendazole)', unit:'ml', quantity:400, reorder:100,
                  expiry: d(-200), notes:'', createdAt: Date.now() };
   const mVac = { id: uid(), name:'CD&T vaccine', unit:'dose', quantity:18, reorder:6,
@@ -1783,7 +1850,6 @@ function loadSampleData(){
     { id: uid(), itemId: mVac.id, kind:'medicine', action:'add', qty:18, date: d(30), goatId:'', notes:'Initial stock', createdAt: Date.now() }
   );
 
-  // Goats
   const buck = { id: uid(), tag:'003', name:'Rocky', breed:'Boer', sex:'Male',
                  dob: d(1200), status:'Active', notes:'Breeding buck.', createdAt: Date.now() };
   const doe1 = { id: uid(), tag:'005', name:'Bella', breed:'Alpine', sex:'Female',
@@ -1801,7 +1867,6 @@ function loadSampleData(){
   const mk = (goat, date, category, details, data) =>
     state.logs.push({ id: uid(), goatId: goat.id, date, category, details, data, createdAt: Date.now() });
 
-  // Bella logs
   mk(doe1, d(30), 'Weight', 'Monthly weighing', { weight:'38.5' });
   mk(doe1, d(20), 'Milk', 'Morning milking', { milk:'1.3', session:'Morning' });
   mk(doe1, d(20), 'Milk', 'Evening milking', { milk:'1.1', session:'Evening' });
@@ -1812,27 +1877,23 @@ function loadSampleData(){
   mk(doe1, d(1), 'Feeding', '', { feedId: fHay.id, feedQty:'1.5', feed:'Hay' });
   mk(doe1, d(1), 'Feeding', '', { feedId: fDairy.id, feedQty:'0.5' });
 
-  // Coco logs
   mk(doe2, d(40), 'Breeding', 'Mated with Rocky', { nextDue: d(-30), cost:'0' });
   mk(doe2, d(25), 'Weight', 'Pre-pregnancy', { weight:'44.2' });
   mk(doe2, d(12), 'Vaccination', 'CD&T vaccine', { medId: mVac.id, medQty:'1', cost:'6.50', nextDue: d(-353) });
   mk(doe2, d(6), 'Weight', 'Gaining well', { weight:'47.9' });
   mk(doe2, d(3), 'Observation', 'Slightly restless, watching closely', {});
 
-  // Buck logs
   mk(buck, d(18), 'Weight', 'Quarterly', { weight:'62.0' });
   mk(buck, d(9), 'Medication', 'Dewormer dose 1', { medId: mDew.id, medQty:'10', cost:'0' });
   mk(buck, d(4), 'Weight', 'Quarterly', { weight:'63.5' });
   mk(buck, d(1), 'Observation', 'Hooves trimmed', {});
 
-  // Kids
   mk(kid1, d(30), 'Weight', 'First weighing', { weight:'6.2' });
   mk(kid1, d(15), 'Weight', 'Growing well', { weight:'9.1' });
   mk(kid1, d(2), 'Weight', 'Latest', { weight:'12.4' });
   mk(kid2, d(15), 'Weight', 'First weighing', { weight:'5.8' });
   mk(kid2, d(2), 'Weight', 'Latest', { weight:'8.9' });
 
-  // Extra milk records for the milk view
   mk(doe1, d(7), 'Milk', 'Weekly summary', { milk:'2.5', session:'Both' });
   mk(doe1, d(3), 'Milk', 'Good yield', { milk:'2.6', session:'Both' });
 }
@@ -1859,11 +1920,16 @@ function renderAll(){
   $('#medStockDate').value = todayISO();
   const today = new Date();
   const monthAgo = new Date(today.getTime() - 30*86400000).toISOString().slice(0,10);
-  const weekAgo = new Date(today.getTime() - 6*86400000).toISOString().slice(0,10);
   $('#repFrom').value = monthAgo;
   $('#repTo').value = todayISO();
   $('#milkFrom').value = monthAgo;
   $('#milkTo').value = todayISO();
+
+  // Restore sort preference if it exists
+  try {
+    const saved = localStorage.getItem(REP_SORT_KEY);
+    if(saved) $('#repSort').value = saved;
+  } catch(e){}
 
   renderAll();
 
