@@ -108,6 +108,17 @@
   .space{justify-content:space-between}
   .mini{width:auto;min-width:150px;padding:6px 10px;font-size:13px}
 
+  /* Search / filter bar */
+  .search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .search-input-wrap{position:relative;flex:1;min-width:220px}
+  .search-input-wrap input{padding-left:36px}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.55;pointer-events:none}
+  .clear-btn{
+    background:transparent;border:none;color:var(--muted);font:inherit;font-weight:700;font-size:13px;
+    cursor:pointer;padding:6px 10px;border-radius:8px;
+  }
+  .clear-btn:hover{color:var(--danger);background:#fdf0ee}
+
   .reminder{
     border-left:4px solid var(--warn);
     background:linear-gradient(180deg,#fffaf0 0%, #fdf8f0 100%);
@@ -142,10 +153,13 @@
   .badge{
     font-family:var(--font-body);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
     padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-2);
+    display:inline-block;
   }
   .badge.sold{background:#f1eae0;color:#7a6a56}
   .badge.deceased{background:#fbe9e5;color:var(--danger)}
   .badge.pregnant{background:#fdf1de;color:var(--warn)}
+  .badge.lactating{background:#e6eff5;color:var(--info)}
+  .badge.dry{background:#f1eae0;color:#7a6a56}
   .badge.low{background:#fdf1de;color:var(--warn)}
   .badge.out{background:#fbe9e5;color:var(--danger)}
   .badge.expiring{background:#fdf1de;color:var(--warn)}
@@ -169,15 +183,22 @@
   .log-detail{font-size:13px;color:var(--muted);margin-top:2px;word-wrap:break-word}
   .empty{color:var(--muted);font-size:14px;padding:8px 0}
 
-  .report-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--accent);padding-bottom:10px;margin-bottom:14px}
-  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+  /* Report */
+  .report-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--accent);padding-bottom:12px;margin-bottom:18px}
+  .report-head h2{font-size:22px;margin:0 0 4px}
+  .report-section{margin-bottom:24px}
+  .report-section > h3{
+    font-size:15px;text-transform:uppercase;letter-spacing:.7px;color:var(--accent-2);
+    padding-bottom:6px;border-bottom:1px solid var(--line);margin:0 0 12px;
+  }
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
   .fact{background:#fdf8f0;border:1px solid var(--line);border-radius:12px;padding:10px;transition:transform var(--t-fast), box-shadow var(--t-fast)}
   .fact:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
   .fact .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800}
   .fact .v{font-family:var(--font-display);font-size:16px;font-weight:600;margin-top:3px}
   table{width:100%;border-collapse:collapse;font-size:14px}
   th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:#faf4ea;font-weight:800}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:#faf4ea;font-weight:800;white-space:nowrap}
   tbody tr{transition:background var(--t-fast)}
   tbody tr:hover{background:#fdf8f0}
   td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -206,11 +227,17 @@
   @media print{
     .no-print{display:none !important}
     *{animation:none !important;transition:none !important;box-shadow:none !important}
-    body{background:#fff;font-size:12px}
+    body{background:#fff;font-size:11.5px}
     main{max-width:none;padding:0}
     .card{border:0;padding:0;margin:0;background:#fff}
     .view.hidden{display:none}
-    th{background:#f2f2f2}
+    th{background:#f2f2f2;padding:6px 8px;font-size:10px}
+    td{padding:6px 8px}
+    .report-head{padding-bottom:8px;margin-bottom:12px}
+    .report-section{margin-bottom:14px}
+    .facts{gap:6px}
+    .fact{padding:6px 8px}
+    .fact .v{font-size:14px}
     .log-item{break-inside:avoid}
     tr{break-inside:avoid}
   }
@@ -313,6 +340,31 @@
         </div>
       </form>
     </div>
+
+    <div class="card no-print">
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="search" id="goatSearch" placeholder="Search by tag, name, breed, status or notes…">
+        </div>
+        <select id="goatFilter" class="mini" aria-label="Filter goats">
+          <option value="all">All goats</option>
+          <option value="active">Active only</option>
+          <option value="Female">Females</option>
+          <option value="Male">Males</option>
+          <option value="Lactating">Lactating</option>
+          <option value="Pregnant">Pregnant</option>
+          <option value="Dry">Dry</option>
+          <option value="Sold">Sold</option>
+          <option value="Deceased">Deceased</option>
+        </select>
+      </div>
+      <div class="row space" style="margin-top:10px">
+        <span class="muted small" id="goatCount">0 goats</span>
+        <button class="clear-btn hidden" id="goatClearFilters" type="button">✕ Clear filters</button>
+      </div>
+    </div>
+
     <div id="goatList" class="goat-grid"></div>
   </section>
 
@@ -383,7 +435,7 @@
         <form id="feedStockForm" class="form-grid" autocomplete="off">
           <label>Feed item <select name="itemId" id="feedStockSelect" required></select></label>
           <label>Quantity to add <input name="qty" type="number" step="0.01" min="0.01" required></label>
-          <label>Date <input name="date" type="date" id="feedStockDate" required></label>
+          <label>Date <input type="date" name="date" id="feedStockDate" required></label>
           <div class="full actions">
             <button type="submit" class="btn">➕ Add stock</button>
           </div>
@@ -519,6 +571,9 @@
           <button class="btn" id="btnPrint">🖨 Print / Save PDF</button>
         </div>
       </div>
+      <p class="muted small" style="margin:10px 0 0">
+        Tip: choose <b>All goats</b> for a herd overview (no milk) or a single goat for a full individual report (with milk).
+      </p>
     </div>
     <div id="reportOut" class="card"></div>
   </section>
@@ -538,10 +593,20 @@ const STORE_KEY = 'goatfarm.v1';
 const REP_SORT_KEY = 'goatfarm.repSort.v1';
 const SOUND_KEY = 'goatfarm.sound.v1';
 const STOCK_CHECK_KEY = 'goatfarm.stockCheck.v1';
-const STOCK_HOUR = 10; // 10am local time
+const GOAT_SEARCH_KEY = 'goatfarm.goatSearch.v1';
+const STOCK_HOUR = 10;
 
 let state = { goats: [], logs: [], feeds: [], medicines: [], inventoryLogs: [] };
 let editingGoatId = null;
+
+/* Goats tab filter state */
+let goatSearch = '';
+let goatFilter = 'all';
+try {
+  const saved = JSON.parse(localStorage.getItem(GOAT_SEARCH_KEY) || '{}');
+  if(typeof saved.q === 'string') goatSearch = saved.q;
+  if(typeof saved.f === 'string') goatFilter = saved.f;
+} catch(e){}
 
 /* ---------- Categories & fields ---------- */
 const CATEGORIES = {
@@ -676,6 +741,17 @@ function sortGoats(goats, mode){
   }
 }
 
+/* Status badge helper */
+function statusBadge(status){
+  const s = status || 'Active';
+  const cls = ['Sold','Deceased'].includes(s) ? s.toLowerCase()
+           : s === 'Pregnant' ? 'pregnant'
+           : s === 'Lactating' ? 'lactating'
+           : s === 'Dry' ? 'dry'
+           : '';
+  return `<span class="badge ${cls}">${esc(s)}</span>`;
+}
+
 function save(){
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
   catch(e){ toast('Could not save (storage full?)'); }
@@ -737,6 +813,10 @@ function sortedLogs(list){
 }
 function logsFor(goatId){ return sortedLogs(state.logs.filter(l => l.goatId === goatId)); }
 
+function offspringOf(goatId){
+  return state.goats.filter(k => k.damId === goatId || k.sireId === goatId);
+}
+
 /* ---------- Stock status helpers ---------- */
 function stockStatus(item){
   const q = Number(item.quantity) || 0;
@@ -761,7 +841,7 @@ function expiryBadge(item){
 }
 
 /* =========================================================
-   Sound — soft "paper swish" UI click (from sampler #6)
+   Sound — soft paper swish
    ========================================================= */
 let audioCtx = null;
 let masterGain = null;
@@ -774,7 +854,7 @@ function getAudioCtx(){
     if(!AC) return null;
     audioCtx = new AC();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.30; // gentle default
+    masterGain.gain.value = 0.30;
     masterGain.connect(audioCtx.destination);
   }
   if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
@@ -842,7 +922,7 @@ $('#tabs').addEventListener('click', e => {
   const b = e.target.closest('.tab');
   if(!b) return;
   if(b.id === 'soundToggle') return;
-  if(b.classList.contains('active')) return; // already on this tab
+  if(b.classList.contains('active')) return;
   switchTab(b.dataset.tab);
   playSwish();
 });
@@ -880,7 +960,6 @@ document.addEventListener('click', e => {
     toast('Marked as done for today');
   }
   if(e.target.closest('[data-reminder-go]')){
-    // Go to Inventory, feeds tab, scroll to deduct form
     switchTab('inventory');
     document.querySelectorAll('#invTabs .subtab').forEach(x =>
       x.classList.toggle('active', x.dataset.sub === 'feeds'));
@@ -1113,25 +1192,87 @@ function startEditGoat(id){
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* ---- Search / filter helpers ---- */
+function getFilteredGoats(){
+  const q = goatSearch.trim().toLowerCase();
+  let list = state.goats;
+
+  if(goatFilter !== 'all'){
+    if(goatFilter === 'active'){
+      list = list.filter(g => !['Sold','Deceased'].includes(g.status));
+    } else if(goatFilter === 'Female' || goatFilter === 'Male'){
+      list = list.filter(g => g.sex === goatFilter);
+    } else {
+      list = list.filter(g => (g.status || 'Active') === goatFilter);
+    }
+  }
+
+  if(q){
+    list = list.filter(g => {
+      const hay = [g.tag, g.name, g.breed, g.notes, g.status]
+        .filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  return list;
+}
+
+function persistGoatSearch(){
+  try {
+    localStorage.setItem(GOAT_SEARCH_KEY, JSON.stringify({ q: goatSearch, f: goatFilter }));
+  } catch(e){}
+}
+
+function updateGoatCount(shown, total){
+  const el = $('#goatCount');
+  if(!el) return;
+  if(shown === total){
+    el.textContent = `${total} goat${total === 1 ? '' : 's'}`;
+  } else {
+    el.textContent = `Showing ${shown} of ${total} goats`;
+  }
+  const clearBtn = $('#goatClearFilters');
+  const hasFilters = goatSearch.trim() || goatFilter !== 'all';
+  clearBtn.classList.toggle('hidden', !hasFilters);
+}
+
 function renderGoats(){
   const list = $('#goatList');
-  if(!state.goats.length){
+  const total = state.goats.length;
+
+  if(!total){
     list.innerHTML = '<div class="card"><p class="empty">No goats registered yet.</p></div>';
+    updateGoatCount(0, 0);
     return;
   }
-  list.innerHTML = state.goats.map((g, i) => {
+
+  const filtered = getFilteredGoats();
+  updateGoatCount(filtered.length, total);
+
+  if(!filtered.length){
+    list.innerHTML = `<div class="card" style="grid-column:1/-1">
+      <p class="empty">No goats match your search or filter.</p>
+      <button class="btn" id="goatNoResultsClear">Clear filters</button>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((g, i) => {
     const logs = logsFor(g.id);
     const last = logs[0];
     const weights = logs.filter(l => l.category === 'Weight' && l.data?.weight)
                         .map(l => Number(l.data.weight));
     const badgeClass = ['Sold','Deceased'].includes(g.status) ? g.status.toLowerCase()
-                     : g.status === 'Pregnant' ? 'pregnant' : '';
+                     : g.status === 'Pregnant' ? 'pregnant'
+                     : g.status === 'Lactating' ? 'lactating'
+                     : g.status === 'Dry' ? 'dry'
+                     : '';
     const dam = g.damId ? goatById(g.damId) : null;
     const sire = g.sireId ? goatById(g.sireId) : null;
     const parentBits = [];
     if(dam) parentBits.push(`Dam: <b>${esc(dam.tag)}</b>${dam.name ? ' ' + esc(dam.name) : ''}`);
     if(sire) parentBits.push(`Sire: <b>${esc(sire.tag)}</b>${sire.name ? ' ' + esc(sire.name) : ''}`);
-    const kidCount = state.goats.filter(k => k.damId === g.id || k.sireId === g.id).length;
+    const kidCount = offspringOf(g.id).length;
 
     return `<div class="goat-card" style="animation-delay:${Math.min(i*55,440)}ms">
       <h4>${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}
@@ -1157,7 +1298,41 @@ function renderGoats(){
   }).join('');
 }
 
+/* Wire up search / filter UI */
+$('#goatSearch').value = goatSearch;
+$('#goatFilter').value = goatFilter;
+
+$('#goatSearch').addEventListener('input', e => {
+  goatSearch = e.target.value;
+  persistGoatSearch();
+  renderGoats();
+});
+$('#goatFilter').addEventListener('change', e => {
+  goatFilter = e.target.value;
+  persistGoatSearch();
+  renderGoats();
+});
+$('#goatClearFilters').addEventListener('click', () => {
+  goatSearch = '';
+  goatFilter = 'all';
+  $('#goatSearch').value = '';
+  $('#goatFilter').value = 'all';
+  persistGoatSearch();
+  renderGoats();
+});
+
+/* Handle "no results clear" button, delegated */
 $('#goatList').addEventListener('click', e => {
+  if(e.target.closest('#goatNoResultsClear')){
+    goatSearch = '';
+    goatFilter = 'all';
+    $('#goatSearch').value = '';
+    $('#goatFilter').value = 'all';
+    persistGoatSearch();
+    renderGoats();
+    return;
+  }
+
   const btn = e.target.closest('button[data-act]');
   if(!btn) return;
   const { act, id } = btn.dataset;
@@ -1175,7 +1350,7 @@ $('#goatList').addEventListener('click', e => {
   }
   if(act === 'delete'){
     const count = state.logs.filter(l => l.goatId === id).length;
-    const kidCount = state.goats.filter(k => k.damId === id || k.sireId === id).length;
+    const kidCount = offspringOf(id).length;
     const extra = kidCount ? ` It is a parent of ${kidCount} goat(s); those links will be cleared.` : '';
     if(confirm(`Delete ${goatLabel(g)} and its ${count} update(s)?${extra}`)){
       state.goats.forEach(k => {
@@ -1318,7 +1493,6 @@ $('#invTabs').addEventListener('click', e => {
   if(b.dataset.sub === 'medicines') renderMedicines();
 });
 
-/* ---------- Feed: add new item ---------- */
 $('#feedForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#feedForm'));
@@ -1347,7 +1521,6 @@ $('#feedForm').addEventListener('submit', e => {
   toast('Feed added');
 });
 
-/* ---------- Feed: add stock ---------- */
 $('#feedStockForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#feedStockForm'));
@@ -1366,7 +1539,6 @@ $('#feedStockForm').addEventListener('submit', e => {
   toast(`Added ${qty} to ${item.name}`);
 });
 
-/* ---------- Feed: deduct stock ---------- */
 $('#feedDeductForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#feedDeductForm'));
@@ -1389,7 +1561,6 @@ $('#feedDeductForm').addEventListener('submit', e => {
   toast(`Deducted ${fmtNum(qty, 2)} ${item.unit} from ${item.name}`);
 });
 
-/* ---------- Medicine: add new item ---------- */
 $('#medForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#medForm'));
@@ -1419,7 +1590,6 @@ $('#medForm').addEventListener('submit', e => {
   toast('Medicine added');
 });
 
-/* ---------- Medicine: add stock ---------- */
 $('#medStockForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#medStockForm'));
@@ -1438,7 +1608,6 @@ $('#medStockForm').addEventListener('submit', e => {
   toast(`Added ${qty} to ${item.name}`);
 });
 
-/* ---------- Medicine: deduct stock ---------- */
 $('#medDeductForm').addEventListener('submit', e => {
   e.preventDefault();
   const f = new FormData($('#medDeductForm'));
@@ -1465,7 +1634,6 @@ function renderInventory(){
   renderFeeds();
   renderMedicines();
 
-  // Refresh stock/deduct dropdowns
   const fs = $('#feedStockSelect');
   const keepFs = fs.value;
   fs.innerHTML = state.feeds.length
@@ -1581,12 +1749,9 @@ function renderInventoryLogs(kind, sel){
   }).join('');
 }
 
-/* ---------- Quick deduct + delete ---------- */
 document.addEventListener('click', e => {
-  // Quick deduct from feed row
   const qf = e.target.closest('button[data-quick-deduct-feed]');
   if(qf){
-    // Ensure feeds subview active
     document.querySelectorAll('#invTabs .subtab').forEach(x =>
       x.classList.toggle('active', x.dataset.sub === 'feeds'));
     document.querySelectorAll('.subview').forEach(v =>
@@ -1604,7 +1769,6 @@ document.addEventListener('click', e => {
     }, 500);
     return;
   }
-  // Quick deduct from medicine row
   const qm = e.target.closest('button[data-quick-deduct-med]');
   if(qm){
     document.querySelectorAll('#invTabs .subtab').forEach(x =>
@@ -1624,7 +1788,6 @@ document.addEventListener('click', e => {
     }, 500);
     return;
   }
-  // Delete feed
   const f = e.target.closest('button[data-del-feed]');
   if(f){
     const item = feedById(f.dataset.delFeed);
@@ -1634,7 +1797,6 @@ document.addEventListener('click', e => {
     save(); renderInventory(); renderDashboard();
     toast('Feed deleted');
   }
-  // Delete medicine
   const m = e.target.closest('button[data-del-med]');
   if(m){
     const item = medById(m.dataset.delMed);
@@ -1774,6 +1936,7 @@ function generateReport(){
   const g = goatById(goatId);
   if(!g){ out.innerHTML = '<p class="empty">Goat not found.</p>'; return; }
 
+  /* ---------- INDIVIDUAL GOAT REPORT ---------- */
   let logs = logsFor(g.id);
   if(from) logs = logs.filter(l => l.date >= from);
   if(to)   logs = logs.filter(l => l.date <= to);
@@ -1787,8 +1950,7 @@ function generateReport(){
   const damText  = dam  ? `${dam.tag}${dam.name ? ' · ' + dam.name : ''}`  : '—';
   const sireText = sire ? `${sire.tag}${sire.name ? ' · ' + sire.name : ''}` : '—';
 
-  const offspring = state.goats
-    .filter(k => k.damId === g.id || k.sireId === g.id)
+  const offspring = offspringOf(g.id)
     .sort((a,b) => (a.dob || '').localeCompare(b.dob || ''));
 
   const offspringRows = offspring.map(k => {
@@ -1798,10 +1960,11 @@ function generateReport(){
       : (k.damId  ? goatById(k.damId)  : null);
     const otherLabel = other ? `${other.tag}${other.name ? ' · ' + other.name : ''}` : '—';
     return `<tr>
-      <td>${esc(k.tag)}${k.name ? ' · ' + esc(k.name) : ''}</td>
+      <td><b>${esc(k.tag)}</b>${k.name ? ' · ' + esc(k.name) : ''}</td>
       <td>${k.dob ? fmtDate(k.dob) : '—'}</td>
+      <td>${ageFrom(k.dob)}</td>
       <td>${esc(k.sex || '—')}</td>
-      <td>${esc(k.status || 'Active')}</td>
+      <td>${statusBadge(k.status)}</td>
       <td>${role === 'Dam' ? 'Sire: ' + esc(otherLabel) : 'Dam: ' + esc(otherLabel)}</td>
     </tr>`;
   }).join('');
@@ -1811,8 +1974,8 @@ function generateReport(){
                       .filter(p => !isNaN(p.weight))
                       .sort((a,b) => a.date.localeCompare(b.date));
 
-  const totalMilk = logs.filter(l => l.category === 'Milk')
-                        .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
+  const milkLogs = logs.filter(l => l.category === 'Milk');
+  const totalMilk = milkLogs.reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
   const totalCost = logs.reduce((s,l) => {
     const c = Number(l.data?.cost); return s + (isNaN(c) ? 0 : c);
   }, 0);
@@ -1860,113 +2023,156 @@ function generateReport(){
   out.innerHTML = `
     <div class="report-head">
       <div>
-        <h2 style="margin:0">Goat Report — ${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}</h2>
+        <h2>Goat Report — ${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}</h2>
         <div class="muted small">Generated ${fmtDate(todayISO())} · Period: ${esc(period)}</div>
       </div>
-      <div class="muted small">${esc(g.status || 'Active')}</div>
+      <div>${statusBadge(g.status)}</div>
     </div>
 
-    <div class="facts">
-      <div class="fact"><div class="k">Breed</div><div class="v">${esc(g.breed || '—')}</div></div>
-      <div class="fact"><div class="k">Sex</div><div class="v">${esc(g.sex || '—')}</div></div>
-      <div class="fact"><div class="k">Date of birth</div><div class="v">${g.dob ? fmtDate(g.dob) : '—'}</div></div>
-      <div class="fact"><div class="k">Age</div><div class="v">${ageFrom(g.dob)}</div></div>
-      <div class="fact"><div class="k">Dam</div><div class="v">${esc(damText)}</div></div>
-      <div class="fact"><div class="k">Sire</div><div class="v">${esc(sireText)}</div></div>
-      <div class="fact"><div class="k">Updates logged</div><div class="v">${logs.length}</div></div>
-      <div class="fact"><div class="k">Offspring recorded</div><div class="v">${offspring.length}</div></div>
-      <div class="fact"><div class="k">Latest weight</div><div class="v">${lastW != null ? fmtNum(lastW) + ' kg' : '—'}</div></div>
-      <div class="fact"><div class="k">Weight change</div><div class="v">${gain != null ? (gain > 0 ? '+' : '') + gain + ' kg' : '—'}</div></div>
-      <div class="fact"><div class="k">Milk recorded</div><div class="v">${totalMilk ? fmtNum(totalMilk) + ' L' : '—'}</div></div>
-      <div class="fact"><div class="k">Kids born (logs)</div><div class="v">${kids || '—'}</div></div>
-      <div class="fact"><div class="k">Costs</div><div class="v">${totalCost ? fmtNum(totalCost, 2) : '—'}</div></div>
-      <div class="fact"><div class="k">Income</div><div class="v">${totalIncome ? fmtNum(totalIncome, 2) : '—'}</div></div>
+    <div class="report-section">
+      <h3>Profile</h3>
+      <div class="facts">
+        <div class="fact"><div class="k">Tag</div><div class="v">${esc(g.tag)}</div></div>
+        <div class="fact"><div class="k">Name</div><div class="v">${esc(g.name || '—')}</div></div>
+        <div class="fact"><div class="k">Sex</div><div class="v">${esc(g.sex || '—')}</div></div>
+        <div class="fact"><div class="k">Breed</div><div class="v">${esc(g.breed || '—')}</div></div>
+        <div class="fact"><div class="k">Date of birth</div><div class="v">${g.dob ? fmtDate(g.dob) : '—'}</div></div>
+        <div class="fact"><div class="k">Age</div><div class="v">${ageFrom(g.dob)}</div></div>
+        <div class="fact"><div class="k">Status</div><div class="v">${esc(g.status || 'Active')}</div></div>
+        <div class="fact"><div class="k">Dam (mother)</div><div class="v">${esc(damText)}</div></div>
+        <div class="fact"><div class="k">Sire (father)</div><div class="v">${esc(sireText)}</div></div>
+        <div class="fact"><div class="k">Offspring recorded</div><div class="v">${offspring.length}</div></div>
+      </div>
+      ${g.notes ? `<p class="small"><b>Notes:</b> ${esc(g.notes)}</p>` : ''}
     </div>
 
-    ${g.notes ? `<p class="small"><b>Notes:</b> ${esc(g.notes)}</p>` : ''}
+    <div class="report-section">
+      <h3>Summary (in period)</h3>
+      <div class="facts">
+        <div class="fact"><div class="k">Updates logged</div><div class="v">${logs.length}</div></div>
+        <div class="fact"><div class="k">Latest weight</div><div class="v">${lastW != null ? fmtNum(lastW) + ' kg' : '—'}</div></div>
+        <div class="fact"><div class="k">Weight change</div><div class="v">${gain != null ? (gain > 0 ? '+' : '') + gain + ' kg' : '—'}</div></div>
+        <div class="fact"><div class="k">Milk recorded</div><div class="v">${totalMilk ? fmtNum(totalMilk) + ' L' : '—'}</div></div>
+        <div class="fact"><div class="k">Kids born (logs)</div><div class="v">${kids || '—'}</div></div>
+        <div class="fact"><div class="k">Costs</div><div class="v">${totalCost ? fmtNum(totalCost, 2) : '—'}</div></div>
+        <div class="fact"><div class="k">Income</div><div class="v">${totalIncome ? fmtNum(totalIncome, 2) : '—'}</div></div>
+      </div>
+    </div>
 
-    <h3>Growth chart (weight)</h3>
-    <div class="chart-wrap">${weightChart(weights)}</div>
+    <div class="report-section">
+      <h3>Growth chart (weight)</h3>
+      <div class="chart-wrap">${weightChart(weights)}</div>
+    </div>
 
-    ${countRows ? `<h3>Activity breakdown</h3>
-      <table style="margin-bottom:18px"><thead><tr><th>Category</th><th class="num">Entries</th></tr></thead>
-      <tbody>${countRows}</tbody></table>` : ''}
+    ${countRows ? `<div class="report-section">
+      <h3>Activity breakdown</h3>
+      <table><thead><tr><th>Category</th><th class="num">Entries</th></tr></thead>
+      <tbody>${countRows}</tbody></table>
+    </div>` : ''}
 
-    ${feedConsRows ? `<h3>Feed consumed in period</h3>
-      <table style="margin-bottom:18px">
-        <thead><tr><th>Feed</th><th class="num">Total</th></tr></thead>
-        <tbody>${feedConsRows}</tbody></table>` : ''}
+    ${feedConsRows ? `<div class="report-section">
+      <h3>Feed consumed in period</h3>
+      <table><thead><tr><th>Feed</th><th class="num">Total</th></tr></thead>
+      <tbody>${feedConsRows}</tbody></table>
+    </div>` : ''}
 
-    ${medConsRows ? `<h3>Medicine used in period</h3>
-      <table style="margin-bottom:18px">
-        <thead><tr><th>Medicine</th><th class="num">Total</th></tr></thead>
-        <tbody>${medConsRows}</tbody></table>` : ''}
+    ${medConsRows ? `<div class="report-section">
+      <h3>Medicine used in period</h3>
+      <table><thead><tr><th>Medicine</th><th class="num">Total</th></tr></thead>
+      <tbody>${medConsRows}</tbody></table>
+    </div>` : ''}
 
-    ${offspring.length ? `
+    ${offspring.length ? `<div class="report-section">
       <h3>Offspring recorded (${offspring.length})</h3>
-      <table style="margin-bottom:18px">
-        <thead><tr><th>Tag</th><th>Born</th><th>Sex</th><th>Status</th><th>Other parent</th></tr></thead>
+      <table>
+        <thead><tr><th>Tag</th><th>Born</th><th>Age</th><th>Sex</th><th>Status</th><th>Other parent</th></tr></thead>
         <tbody>${offspringRows}</tbody>
-      </table>` : ''}
+      </table>
+    </div>` : ''}
 
-    <h3>Full history</h3>
-    ${logs.length ? `<table>
-      <thead><tr><th style="width:110px">Date</th><th style="width:130px">Category</th><th>Details</th></tr></thead>
-      <tbody>${logs.map(l => `
-        <tr>
-          <td>${fmtDate(l.date)}</td>
-          <td>${(CATEGORIES[l.category]?.icon || '📌')} ${esc(l.category)}</td>
-          <td>${esc(formatLogData(l)) || '<span class="muted">—</span>'}</td>
-        </tr>`).join('')}
-      </tbody></table>`
-      : '<p class="empty">No updates in this period.</p>'}
+    <div class="report-section">
+      <h3>Full history</h3>
+      ${logs.length ? `<table>
+        <thead><tr><th style="width:110px">Date</th><th style="width:140px">Category</th><th>Details</th></tr></thead>
+        <tbody>${logs.map(l => `
+          <tr>
+            <td>${fmtDate(l.date)}</td>
+            <td>${(CATEGORIES[l.category]?.icon || '📌')} ${esc(l.category)}</td>
+            <td>${esc(formatLogData(l)) || '<span class="muted">—</span>'}</td>
+          </tr>`).join('')}
+        </tbody></table>`
+        : '<p class="empty">No updates in this period.</p>'}
+    </div>
 
     <p class="muted small" style="margin-top:20px">Goat Farm Manager · report for ${esc(g.tag)} · ${esc(period)}</p>`;
   out.dataset.ready = '1';
   replayFade(out);
 }
 
+/* ---------- Herd report (no milk) ---------- */
 function herdReport(from, to, sortMode){
   const period = (from || to)
-    ? `${from ? fmtDate(from) : 'start'} → ${to ? fmtDate(to) : 'today'}`
+    ? `${from ? fmtDate(from) : 'start'} → ${fmtDate(to)}`
     : 'All time';
 
   let logs = sortedLogs(state.logs);
   if(from) logs = logs.filter(l => l.date >= from);
   if(to)   logs = logs.filter(l => l.date <= to);
 
-  const totalMilk = logs.filter(l => l.category === 'Milk')
-                        .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
+  const kidsBorn = logs.filter(l => l.category === 'Kidding')
+                       .reduce((s,l) => s + (Number(l.data?.kids) || 0), 0);
   const totalCost = logs.reduce((s,l) => {
     const c = Number(l.data?.cost); return s + (isNaN(c) ? 0 : c);
   }, 0);
-  const kids = logs.filter(l => l.category === 'Kidding')
-                   .reduce((s,l) => s + (Number(l.data?.kids) || 0), 0);
+  const totalIncome = logs.reduce((s,l) => {
+    const a = Number(l.data?.amount); return s + (isNaN(a) ? 0 : a);
+  }, 0);
 
   const sortedGoats = sortGoats(state.goats, sortMode || 'tag-status');
 
+  /* Status counts */
+  const statusCounts = {};
+  state.goats.forEach(g => {
+    const s = g.status || 'Active';
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+  });
+  const statusRows = Object.entries(statusCounts)
+    .sort((a,b) => statusRank(a[0]) - statusRank(b[0]))
+    .map(([s,n]) => `<tr><td>${statusBadge(s)}</td><td class="num">${n}</td></tr>`)
+    .join('');
+
+  /* Sex counts */
+  const femaleCount = state.goats.filter(g => g.sex === 'Female').length;
+  const maleCount   = state.goats.filter(g => g.sex === 'Male').length;
+  const unknownSex  = state.goats.length - femaleCount - maleCount;
+
+  /* Per-goat rows with everything */
   const rows = sortedGoats.map(g => {
     const gl = logs.filter(l => l.goatId === g.id);
     const w = gl.filter(l => l.category === 'Weight' && l.data?.weight);
     const lastW = w.length ? Number(w[0].data.weight) : null;
-    const milk = gl.filter(l => l.category === 'Milk')
-                   .reduce((s,l) => s + (Number(l.data?.milk) || 0), 0);
     const dam = g.damId ? goatById(g.damId) : null;
     const sire = g.sireId ? goatById(g.sireId) : null;
-    const parentBits = [];
-    if(dam) parentBits.push(`D:${dam.tag}`);
-    if(sire) parentBits.push(`S:${sire.tag}`);
+    const offspringCount = offspringOf(g.id).length;
+    const damLabel = dam ? `${dam.tag}${dam.name ? ' · ' + dam.name : ''}` : '—';
+    const sireLabel = sire ? `${sire.tag}${sire.name ? ' · ' + sire.name : ''}` : '—';
     return `<tr>
-      <td>${esc(g.tag)}${g.name ? ' · ' + esc(g.name) : ''}</td>
-      <td>${esc(g.status || 'Active')}</td>
+      <td><b>${esc(g.tag)}</b></td>
+      <td>${esc(g.name || '—')}</td>
+      <td>${esc(g.sex || '—')}</td>
+      <td>${esc(g.breed || '—')}</td>
+      <td>${g.dob ? fmtDate(g.dob) : '—'}</td>
       <td>${ageFrom(g.dob)}</td>
-      <td class="muted small">${esc(parentBits.join(' · ')) || '—'}</td>
+      <td>${statusBadge(g.status)}</td>
+      <td class="muted small">${esc(damLabel)}</td>
+      <td class="muted small">${esc(sireLabel)}</td>
+      <td class="num">${offspringCount || '—'}</td>
       <td class="num">${lastW != null ? fmtNum(lastW) + ' kg' : '—'}</td>
-      <td class="num">${milk ? fmtNum(milk) + ' L' : '—'}</td>
       <td class="num">${gl.length}</td>
     </tr>`;
   }).join('');
 
+  /* Inventory alerts */
   const lowFeed = state.feeds.filter(f => stockStatus(f) !== 'ok');
   const lowMed  = state.medicines.filter(m => stockStatus(m) !== 'ok');
   const expSoon = state.medicines.filter(m => {
@@ -1987,48 +2193,73 @@ function herdReport(from, to, sortMode){
   return `
     <div class="report-head">
       <div>
-        <h2 style="margin:0">Herd Summary Report</h2>
+        <h2>Herd Report</h2>
         <div class="muted small">Generated ${fmtDate(todayISO())} · Period: ${esc(period)} · Sorted: ${esc(sortLabel)}</div>
       </div>
-      <div class="muted small">${state.goats.length} goat(s) registered</div>
+      <div class="muted small">${state.goats.length} goat(s)</div>
     </div>
 
-    <div class="facts">
-      <div class="fact"><div class="k">Goats</div><div class="v">${state.goats.length}</div></div>
-      <div class="fact"><div class="k">Updates in period</div><div class="v">${logs.length}</div></div>
-      <div class="fact"><div class="k">Milk recorded</div><div class="v">${totalMilk ? fmtNum(totalMilk) + ' L' : '—'}</div></div>
-      <div class="fact"><div class="k">Kids born</div><div class="v">${kids || '—'}</div></div>
-      <div class="fact"><div class="k">Total costs</div><div class="v">${totalCost ? fmtNum(totalCost, 2) : '—'}</div></div>
-      <div class="fact"><div class="k">Feed items low</div><div class="v">${lowFeed.length}</div></div>
-      <div class="fact"><div class="k">Medicines low</div><div class="v">${lowMed.length}</div></div>
-      <div class="fact"><div class="k">Expiring soon</div><div class="v">${expSoon.length}</div></div>
+    <div class="report-section">
+      <h3>Herd overview</h3>
+      <div class="facts">
+        <div class="fact"><div class="k">Total goats</div><div class="v">${state.goats.length}</div></div>
+        <div class="fact"><div class="k">Females</div><div class="v">${femaleCount}${unknownSex ? ' +' + unknownSex + '?' : ''}</div></div>
+        <div class="fact"><div class="k">Males</div><div class="v">${maleCount}</div></div>
+        <div class="fact"><div class="k">Updates in period</div><div class="v">${logs.length}</div></div>
+        <div class="fact"><div class="k">Kids born in period</div><div class="v">${kidsBorn || '—'}</div></div>
+        <div class="fact"><div class="k">Total costs</div><div class="v">${totalCost ? fmtNum(totalCost, 2) : '—'}</div></div>
+        <div class="fact"><div class="k">Total income</div><div class="v">${totalIncome ? fmtNum(totalIncome, 2) : '—'}</div></div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <h3>Status breakdown</h3>
+      <table><thead><tr><th>Status</th><th class="num">Goats</th></tr></thead>
+      <tbody>${statusRows || '<tr><td colspan="2" class="muted">—</td></tr>'}</tbody></table>
     </div>
 
     ${(lowFeed.length || lowMed.length || expSoon.length) ? `
-      <h3>Inventory alerts</h3>
-      <table style="margin-bottom:18px">
-        <thead><tr><th>Item</th><th>Type</th><th>Status</th><th class="num">On hand</th><th>Expiry</th></tr></thead>
-        <tbody>
-          ${lowFeed.map(f => `<tr><td>${esc(f.name)}</td><td>Feed</td><td>${stockBadge(f)}</td>
-            <td class="num">${f.quantity} ${esc(f.unit)}</td><td>—</td></tr>`).join('')}
-          ${lowMed.map(m => `<tr><td>${esc(m.name)}</td><td>Medicine</td><td>${stockBadge(m)}</td>
-            <td class="num">${m.quantity} ${esc(m.unit)}</td><td>${m.expiry ? fmtDate(m.expiry) : '—'}</td></tr>`).join('')}
-          ${expSoon.filter(m => stockStatus(m) === 'ok').map(m => `<tr><td>${esc(m.name)}</td><td>Medicine</td>
-            <td>${expiryBadge(m)}</td><td class="num">${m.quantity} ${esc(m.unit)}</td>
-            <td>${fmtDate(m.expiry)}</td></tr>`).join('')}
-        </tbody>
-      </table>` : ''}
+      <div class="report-section">
+        <h3>Inventory alerts</h3>
+        <table>
+          <thead><tr><th>Item</th><th>Type</th><th>Status</th><th class="num">On hand</th><th>Expiry</th></tr></thead>
+          <tbody>
+            ${lowFeed.map(f => `<tr><td>${esc(f.name)}</td><td>Feed</td><td>${stockBadge(f)}</td>
+              <td class="num">${f.quantity} ${esc(f.unit)}</td><td>—</td></tr>`).join('')}
+            ${lowMed.map(m => `<tr><td>${esc(m.name)}</td><td>Medicine</td><td>${stockBadge(m)}</td>
+              <td class="num">${m.quantity} ${esc(m.unit)}</td><td>${m.expiry ? fmtDate(m.expiry) : '—'}</td></tr>`).join('')}
+            ${expSoon.filter(m => stockStatus(m) === 'ok').map(m => `<tr><td>${esc(m.name)}</td><td>Medicine</td>
+              <td>${expiryBadge(m)}</td><td class="num">${m.quantity} ${esc(m.unit)}</td>
+              <td>${fmtDate(m.expiry)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
 
-    <h3>Per-goat overview</h3>
-    ${state.goats.length ? `<table>
-      <thead><tr><th>Goat</th><th>Status</th><th>Age</th><th>Parents</th>
-      <th class="num">Last weight</th><th class="num">Milk</th><th class="num">Updates</th></tr></thead>
-      <tbody>${rows}</tbody></table>`
+    <div class="report-section">
+      <h3>Every goat — full details</h3>
+      ${state.goats.length ? `<table>
+        <thead>
+          <tr>
+            <th>Tag</th><th>Name</th><th>Sex</th><th>Breed</th>
+            <th>Date of birth</th><th>Age</th><th>Status</th>
+            <th>Dam</th><th>Sire</th>
+            <th class="num">Offspring</th>
+            <th class="num">Last weight</th>
+            <th class="num">Updates</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`
       : '<p class="empty">No goats registered.</p>'}
+    </div>
 
-    <h3 style="margin-top:20px">Recent activity</h3>
-    ${logs.length ? logs.slice(0, 40).map(logItemHTML).join('')
-      : '<p class="empty">No updates in this period.</p>'}
+    <div class="report-section">
+      <h3>Recent activity (in period)</h3>
+      ${logs.length ? logs.slice(0, 40).map(logItemHTML).join('')
+        : '<p class="empty">No updates in this period.</p>'}
+    </div>
+
+    <p class="muted small" style="margin-top:20px">Goat Farm Manager · herd report · ${esc(period)}</p>
   `;
 }
 
